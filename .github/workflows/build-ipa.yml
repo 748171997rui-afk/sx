@@ -1,6 +1,7 @@
 name: Build iOS IPA
 
 # 手动触发（Actions 页签 → Run workflow），或推送到 main 自动构建
+# 有证书 Secrets → 出签名 IPA；没有 → 自动兜底编译「免签 IPA」（可用 Sideloadly/AltStore 自签安装）
 on:
   workflow_dispatch:
   push:
@@ -13,23 +14,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---------- 前置检查：Secrets 缺失时尽早失败并给出明确提示 ----------
-      - name: 检查签名材料（仓库 Secrets）
+      # ---------- 判断签名材料是否齐备（齐备→签名构建；缺→免签兜底） ----------
+      - name: 检查签名材料
         env:
           P12_BASE64: ${{ secrets.P12_BASE64 }}
           PROFILE_BASE64: ${{ secrets.MOBILEPROVISION_BASE64 }}
         run: |
-          missing=0
+          missing=""
           for v in P12_BASE64 P12_PASSWORD KEYCHAIN_PASSWORD MOBILEPROVISION_BASE64 APPLE_TEAM_ID SIGNING_CERT_NAME EXPORT_METHOD; do
             val="${!v}"
-            if [ -z "$val" ]; then echo "::error::缺少 Secret：$v"; missing=1; fi
+            if [ -z "$val" ]; then missing="$missing $v"; fi
           done
-          if [ "$missing" = "1" ]; then
-            echo "::error::请按 README.md 的 Secrets 清单在仓库 Settings → Secrets and variables → Actions 配好后重新运行"
-            exit 1
+          if [ -z "$missing" ]; then
+            echo "HAS_SIGNING=true" >> $GITHUB_ENV
+            echo "签名材料齐全，将出【签名 IPA】"
+          else
+            echo "HAS_SIGNING=false" >> $GITHUB_ENV
+            echo "::warning::缺少 Secrets:$missing —— 本次将编译【免签 IPA】，装到手机需要用 Sideloadly / AltStore 等工具自签，或配好 Secrets 后重跑"
           fi
 
-      # 仓库里同时内置了最新版页面（ios-app/Resources/index.html）；
+      # 仓库里内置了最新版页面（ios-app/Resources/index.html）；
       # 若同仓还放有 sixun-report 源码目录则优先同步它。
       - name: 准备 App 页面资源
         run: |
@@ -45,8 +49,9 @@ jobs:
         working-directory: ios-app
         run: xcodegen generate
 
-      # ---------- 签名材料（全部来自仓库 Secrets，不落仓库文件） ----------
+      # ================= 有签名材料：标准签名流程 =================
       - name: Import signing certificate
+        if: env.HAS_SIGNING == 'true'
         env:
           P12_BASE64: ${{ secrets.P12_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
@@ -63,6 +68,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
       - name: Import provisioning profile
+        if: env.HAS_SIGNING == 'true'
         env:
           PROFILE_BASE64: ${{ secrets.MOBILEPROVISION_BASE64 }}
         run: |
@@ -77,8 +83,8 @@ jobs:
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "使用描述文件：$PROFILE_NAME"
 
-      # ---------- 生成带签名的 exportOptions ----------
       - name: Prepare exportOptions
+        if: env.HAS_SIGNING == 'true'
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           EXPORT_METHOD: ${{ secrets.EXPORT_METHOD }}
@@ -93,8 +99,8 @@ jobs:
           PY
           cat exportOptions.plist
 
-      # ---------- 编译（归档时即完成签名） ----------
-      - name: Archive
+      - name: Archive (signed)
+        if: env.HAS_SIGNING == 'true'
         working-directory: ios-app
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -111,16 +117,43 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
 
-      - name: Export IPA
+      - name: Export IPA (signed)
+        if: env.HAS_SIGNING == 'true'
         run: |
           xcodebuild -exportArchive \
             -archivePath build/SalesBoard.xcarchive \
             -exportOptionsPlist exportOptions.plist \
             -exportPath build/ipa
 
+      # ================= 无签名材料：免签兜底（手工打 Payload 包） =================
+      - name: Archive (unsigned)
+        if: env.HAS_SIGNING == 'false'
+        working-directory: ios-app
+        run: |
+          xcodebuild archive \
+            -project SalesBoard.xcodeproj \
+            -scheme SalesBoard \
+            -configuration Release \
+            -archivePath ../build/SalesBoard.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" CODE_SIGN_ENTITLEMENTS=""
+
+      - name: Package unsigned IPA
+        if: env.HAS_SIGNING == 'false'
+        run: |
+          mkdir -p build/ipa/Payload
+          cp -R build/SalesBoard.xcarchive/Products/Applications/SalesBoard.app build/ipa/Payload/
+          cd build/ipa
+          zip -qry ../SalesBoard-unsigned.ipa Payload
+          cd ../..
+          ls -la build/
+
+      # ---------- 统一上传 ----------
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: SalesBoard-ipa
-          path: build/ipa/*.ipa
+          path: |
+            build/ipa/*.ipa
+            build/*.ipa
           if-no-files-found: error
+          retention-days: 30
