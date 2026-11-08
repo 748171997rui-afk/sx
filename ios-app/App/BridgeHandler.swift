@@ -1,18 +1,105 @@
 import Foundation
 import WebKit
 
-/// sxboard:// 自定义协议处理器：App 的整个原生层就这几十行。
+/// 思迅直连传输层：scheme 处理器 + JS 消息桥共用同一套发送逻辑。
 ///
 /// 页面（index.html 的 iOS 直连引擎）会发两类请求：
-///   sxboard://fetch?p=/@raw&m=POST&b=<JSON>
-///       { method, url, body, headers, cookie } —— 带指定 Cookie 直连思迅，
-///       返回 { status, text, setCookies:[{name,value}] }，Cookie 罐由页面自己管。
-///   sxboard://direct?url=<相对路径>
-///       原样 GET（验证码图片等），把字节流回给 <img>。
-final class BridgeHandler: NSObject, WKURLSchemeHandler {
+///   1. WKScriptMessageHandler「nativeFetch」（主通道，可靠）：
+///        postMessage({id, p, m, b}) → URLSession 直连思迅 → __sxboardReply(id, json)
+///   2. sxboard:// 协议（备用通道）：
+///        sxboard://fetch?p=/@raw&m=POST&b=<JSON>    逻辑请求转发
+///        sxboard://direct?url=<相对路径>             原样 GET（验证码图片等，img 可用）
+final class BridgeHandler: NSObject {
 
     static let target = URL(string: "http://1.12.232.80:8032")!
     private static let defaultTimeout: TimeInterval = 200   // 库存全量查询最慢 180 秒
+
+    // MARK: - 公共发送逻辑（scheme / message 两个入口都走这里）
+
+    /// payload: { method, url, body, headers, cookie }
+    /// 结果:   { status, text, setCookies:[{name,value}] , error? }
+    static func performFetch(_ payload: [String: Any], _ done: @escaping ([String: Any]) -> Void) {
+        let method = (payload["method"] as? String ?? "GET").uppercased()
+        let path = payload["url"] as? String ?? "/"
+        let body = payload["body"] as? String ?? ""
+        let extraHeaders = payload["headers"] as? [String: Any] ?? [:]
+        let cookieHeader = payload["cookie"] as? String ?? ""
+
+        guard let target = URL(string: Self.target.absoluteString + path) else {
+            done(["status": 502, "text": "", "setCookies": [], "error": "目标地址非法"])
+            return
+        }
+
+        var request = URLRequest(url: target, timeoutInterval: Self.defaultTimeout)
+        request.httpMethod = method
+        request.setValue("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
+        request.setValue("application/json, text/javascript, */*; q=0.01", forHTTPHeaderField: "Accept")
+        request.setValue("zh-CN,zh;q=0.9", forHTTPHeaderField: "Accept-Language")
+        request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
+        request.setValue(Self.target.absoluteString + "/MainPage/MainFrame.aspx", forHTTPHeaderField: "Referer")
+        request.setValue(Self.target.absoluteString, forHTTPHeaderField: "Origin")
+        for (k, v) in extraHeaders { request.setValue(String(describing: v), forHTTPHeaderField: k) }
+        if !cookieHeader.isEmpty { request.setValue(cookieHeader, forHTTPHeaderField: "Cookie") }
+        if method == "POST", let data = body.data(using: .utf8) { request.httpBody = data }
+
+        let config = URLSessionConfiguration.ephemeral
+        config.httpShouldSetCookies = false
+        config.httpCookieAcceptPolicy = .never
+        config.timeoutIntervalForRequest = Self.defaultTimeout
+        let session = URLSession(configuration: config)
+
+        session.dataTask(with: request) { data, response, error in
+            defer { session.finishTasksAndInvalidate() }
+            if let error = error {
+                done(["status": 502, "text": "", "setCookies": [],
+                      "error": "请求失败：" + error.localizedDescription])
+                return
+            }
+            let http = response as? HTTPURLResponse
+            let status = http?.statusCode ?? 502
+            let text = String(data: data ?? Data(), encoding: .utf8) ?? ""
+            var setCookies: [[String: String]] = []
+            if let http = http {
+                var fields: [String: String] = [:]
+                for (k, v) in http.allHeaderFields {
+                    if let ks = k as? String, let vs = v as? String { fields[ks] = vs }
+                }
+                let cookies = HTTPCookie.cookies(withResponseHeaderFields: fields, for: http.url ?? target)
+                setCookies = cookies.map { ["name": $0.name, "value": $0.value] }
+            }
+            done(["status": status, "text": text, "setCookies": setCookies])
+        }.resume()
+    }
+
+    // MARK: - JS 消息桥（主通道：postMessage → performFetch → evaluateJavaScript 回调）
+
+    static func handleMessageBody(_ body: Any, replyTo webView: WKWebView) {
+        guard let dict = body as? [String: Any],
+              let id = dict["id"] as? Int else { return }
+        let payload: [String: Any] = [
+            "method": dict["m"] as? String ?? "GET",
+            "url": dict["p"] as? String ?? "/",
+            "body": dict["b"] as? String ?? "",
+            "headers": [:],
+            "cookie": "",
+        ]
+        performFetch(payload) { result in
+            DispatchQueue.main.async {
+                guard let data = try? JSONSerialization.data(withJSONObject: result, options: []),
+                      let json = String(data: data, encoding: .utf8) else { return }
+                // U+2028/U+2029 在 JS 字符串字面量里会报语法错，必须转义
+                let safe = json
+                    .replacingOccurrences(of: "\\u2028", with: "\\u2028")
+                    .replacingOccurrences(of: "\u{2028}", with: "\\u2028")
+                    .replacingOccurrences(of: "\u{2029}", with: "\\u2029")
+                webView.evaluateJavaScript("window.__sxboardReply(\(id), \(safe));", completionHandler: nil)
+            }
+        }
+    }
+}
+
+/// sxboard:// 自定义协议处理器（备用通道：direct 给 <img> 用，fetch 兜底）
+extension BridgeHandler: WKURLSchemeHandler {
 
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
         guard let url = urlSchemeTask.request.url else { finish(urlSchemeTask); return }
@@ -51,58 +138,9 @@ final class BridgeHandler: NSObject, WKURLSchemeHandler {
                                "error": "桥参数无法解析"])
             return
         }
-
-        let method = (payload["method"] as? String ?? "GET").uppercased()
-        let path = payload["url"] as? String ?? "/"
-        let body = payload["body"] as? String ?? ""
-        let extraHeaders = payload["headers"] as? [String: Any] ?? [:]
-        let cookieHeader = payload["cookie"] as? String ?? ""
-
-        guard let target = URL(string: Self.target.absoluteString + path) else {
-            respondJSON(task, ["status": 502, "text": "", "setCookies": [],
-                               "error": "目标地址非法"])
-            return
+        Self.performFetch(payload) { result in
+            DispatchQueue.main.async { self.respondJSON(task, result) }
         }
-
-        var request = URLRequest(url: target, timeoutInterval: Self.defaultTimeout)
-        request.httpMethod = method
-        request.setValue("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
-        request.setValue("application/json, text/javascript, */*; q=0.01", forHTTPHeaderField: "Accept")
-        request.setValue("zh-CN,zh;q=0.9", forHTTPHeaderField: "Accept-Language")
-        request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
-        request.setValue(Self.target.absoluteString + "/MainPage/MainFrame.aspx", forHTTPHeaderField: "Referer")
-        request.setValue(Self.target.absoluteString, forHTTPHeaderField: "Origin")
-        for (k, v) in extraHeaders { request.setValue(String(describing: v), forHTTPHeaderField: k) }
-        if !cookieHeader.isEmpty { request.setValue(cookieHeader, forHTTPHeaderField: "Cookie") }
-        if method == "POST", let data = body.data(using: .utf8) { request.httpBody = data }
-
-        let config = URLSessionConfiguration.ephemeral
-        config.httpShouldSetCookies = false
-        config.httpCookieAcceptPolicy = .never
-        config.timeoutIntervalForRequest = Self.defaultTimeout
-        let session = URLSession(configuration: config)
-
-        session.dataTask(with: request) { data, response, error in
-            defer { session.finishTasksAndInvalidate() }
-            if let error = error {
-                self.respondJSON(task, ["status": 502, "text": "", "setCookies": [],
-                                        "error": "请求失败：" + error.localizedDescription])
-                return
-            }
-            let http = response as? HTTPURLResponse
-            let status = http?.statusCode ?? 502
-            let text = String(data: data ?? Data(), encoding: .utf8) ?? ""
-            var setCookies: [[String: String]] = []
-            if let http = http {
-                var fields: [String: String] = [:]
-                for (k, v) in http.allHeaderFields {
-                    if let ks = k as? String, let vs = v as? String { fields[ks] = vs }
-                }
-                let cookies = HTTPCookie.cookies(withResponseHeaderFields: fields, for: http.url ?? target)
-                setCookies = cookies.map { ["name": $0.name, "value": $0.value] }
-            }
-            self.respondJSON(task, ["status": status, "text": text, "setCookies": setCookies])
-        }.resume()
     }
 
     // MARK: - 原样 GET（验证码图片）
@@ -132,14 +170,11 @@ final class BridgeHandler: NSObject, WKURLSchemeHandler {
             guard let data = data, error == nil else { self.finish(task); return }
             do {
                 let mime = (response as? HTTPURLResponse)?.mimeType ?? "image/png"
-                let header = "HTTP/1.1 200 OK\r\nContent-Type: " + mime + "\r\nContent-Length: " +
-                    String(data.count) + "\r\n\r\n"
                 let head = URLResponse(url: task.request.url ?? target,
                                        mimeType: mime, expectedContentLength: data.count, textEncodingName: nil)
                 try task.didReceive(head)
                 try task.didReceive(data)
                 try task.didFinish()
-                _ = header
             } catch {
                 // WebKit 已取消本次加载，忽略
             }

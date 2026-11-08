@@ -19,13 +19,24 @@ struct BoardView: View {
     }
 }
 
+/// JS 消息桥协调器：页面 postMessage({id,p,m,b}) → performFetch → __sxboardReply 回调
+final class NativeFetchCoordinator: NSObject, WKScriptMessageHandler {
+    func userContentController(_ userContentController: WKUserContentController,
+                               didReceive message: WKScriptMessage) {
+        guard message.name == "nativeFetch" else { return }
+        BridgeHandler.handleMessageBody(message.body, replyTo: message.webView)
+    }
+}
+
 struct BoardWebView: UIViewRepresentable {
     let reloadToken: Int
 
     func makeUIView(context: Context) -> WKWebView {
         let cfg = WKWebViewConfiguration()
-        // 页面通过 sxboard:// 协议与原生层通信（见 BridgeHandler）
+        // 备用通道：sxboard:// 协议（验证码 <img> 用 direct；fetch 兜底）
         cfg.setURLSchemeHandler(BridgeHandler(), forURLScheme: "sxboard")
+        // 主通道：postMessage 桥（WKWebView 里 fetch/XHR 无法访问自定义协议，必须走这个）
+        cfg.userContentController.add(NativeFetchCoordinator(), name: "nativeFetch")
         // 标记「跑在 App 里」：index.html 的 IS_IOS_APP 检测依赖这个注入
         let marker = WKUserScript(
             source: "window.__SXBOARD_APP__=true;",

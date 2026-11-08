@@ -621,7 +621,28 @@ const IS_IOS_APP=(location.protocol==='sxboard:')
   ||!!(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.nativeFetch);
 let IOS_MODE=false;   // /status 返回 mode=ios 后置 true：强制实时查询、隐藏本地库专属模块
 if(IS_IOS_APP&&!window.__NATIVE_BRIDGE__){
+  /* 主通道：WKScriptMessageHandler postMessage（WKWebView 里 fetch/XHR 无法访问自定义协议，
+     sxboard:// 只有 <img> 等资源加载可靠，fetch 会因跨域/不支持而失败） */
+  var __sxSeq=0, __sxCbs={};
+  window.__sxboardReply=function(id,obj){
+    var cb=__sxCbs[id]; delete __sxCbs[id];
+    if(cb){ clearTimeout(cb._t); cb(obj); }
+  };
   window.__NATIVE_BRIDGE__=function(path,opt){
+    var handler=(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.nativeFetch)||null;
+    if(handler){
+      return new Promise(function(resolve){
+        var id=++__sxSeq;
+        var done=function(o){ delete __sxCbs[id]; resolve(o||{success:false,message:'桥返回为空'}); };
+        var cb=function(o){ done(o); };
+        cb._t=setTimeout(function(){ done({success:false,message:'桥响应超时（60 秒）'}); },60000);
+        __sxCbs[id]=cb;
+        var m=(opt&&opt.method)||'GET';
+        var body=(opt&&opt.body)||'';
+        handler.postMessage({id:id,p:path,m:m,b:body});
+      });
+    }
+    /* 后备：sxboard:// fetch（部分 iOS 版本可用） */
     return new Promise(function(resolve){
       var m=(opt&&opt.method)||'GET';
       var body=(opt&&opt.body)||'';
@@ -2268,7 +2289,9 @@ async function iosLogin(path,opt){
   if(res.error) return {success:false,message:res.error};
   let parsed={};
   try{ parsed=JSON.parse(res.text||'{}'); }
-  catch(e){ parsed={success:false,message:'登录响应解析失败'}; }
+  catch(e){ parsed={success:false,message:'登录响应解析失败（HTTP '+res.status+'：'+String(res.text||'').slice(0,80)+'）'}; }
+  if(!parsed.success&&!parsed.message)
+    parsed.message='HTTP '+res.status+'：'+String(res.text||'').slice(0,80);
   if(parsed.success){
     jarSet('sx_jar',mergeSet(minusCtx(beforeJar),res.setCookies||[]));
   }
