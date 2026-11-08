@@ -23,8 +23,8 @@ struct BoardView: View {
 final class NativeFetchCoordinator: NSObject, WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController,
                                didReceive message: WKScriptMessage) {
-        guard message.name == "nativeFetch" else { return }
-        BridgeHandler.handleMessageBody(message.body, replyTo: message.webView)
+        guard message.name == "nativeFetch", let wv = message.webView else { return }
+        BridgeHandler.handleMessageBody(message.body, replyTo: wv)
     }
 }
 
