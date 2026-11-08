@@ -1,0 +1,2424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="销售看板">
+<meta name="application-name" content="销售看板">
+<meta name="theme-color" content="#f5f7fa">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="appicon.png">
+<link rel="icon" type="image/png" href="appicon.png">
+<title>销售看板</title>
+<style>
+:root{
+  --bg:#f5f7fa; --card:#fff; --line:#e4e9f0; --line2:#eef1f6;
+  --text:#1f2937; --muted:#6b7280; --hint:#9aa3af;
+  --primary:#2563eb; --primary-soft:#eef4ff; --primary-line:#c7dbff;
+  --ok:#0f9d58; --ok-soft:#e9f7ef; --warn:#b45309; --warn-soft:#fff5e6;
+  --danger:#c0392b; --danger-soft:#fdecea;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+.wrap{max-width:1440px;margin:0 auto;padding:24px 24px 60px}
+h1{font-size:20px;font-weight:600;margin:0}
+h2{font-size:15px;font-weight:600;margin:0}
+h3{font-size:13px;font-weight:600;margin:0;color:var(--muted)}
+a{color:var(--primary);text-decoration:none}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.top-left{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sub{color:var(--muted);font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;
+  font-size:12px;border:1px solid var(--line);background:var(--card);color:var(--muted);white-space:nowrap}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--hint)}
+.badge.ok{background:var(--ok-soft);border-color:#bfe6cf;color:var(--ok)}
+.badge.ok .dot{background:var(--ok)}
+.badge.bad{background:var(--warn-soft);border-color:#f0dcb8;color:var(--warn)}
+.badge.bad .dot{background:var(--warn)}
+.badge.blue{background:var(--primary-soft);border-color:var(--primary-line);color:var(--primary)}
+.badge.blue .dot{background:var(--primary)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;
+  border:1px solid var(--line);background:#fff;color:var(--text);border-radius:8px;
+  font-size:13px;cursor:pointer;white-space:nowrap;transition:.15s}
+.btn:hover{border-color:var(--primary-line);background:var(--primary-soft);color:var(--primary)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:#1d4fd8;color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn.danger{color:var(--danger);border-color:#f3c6c0}
+.btn.danger:hover{background:var(--danger-soft);border-color:#f3c6c0;color:var(--danger)}
+input[type=text],input[type=password],input[type=number],select,textarea{width:100%;padding:8px 10px;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);
+  font-size:13px;outline:none;font-family:inherit}
+textarea{resize:vertical;min-height:62px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.field{margin-bottom:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hint{font-size:12px;color:var(--hint);line-height:1.7}
+.note{padding:10px 12px;border-radius:8px;background:var(--primary-soft);
+  border:1px solid var(--primary-line);font-size:12px;color:#1e40af;line-height:1.7}
+.note.warn{background:var(--warn-soft);border-color:#f0dcb8;color:var(--warn)}
+.note.bad{background:var(--danger-soft);border-color:#f3c6c0;color:var(--danger)}
+.note.ok{background:var(--ok-soft);border-color:#bfe6cf;color:var(--ok)}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:0;flex-wrap:wrap}
+.tab{padding:9px 16px;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;
+  cursor:pointer;font-size:13px;color:var(--muted);background:transparent}
+.tab:hover{color:var(--primary)}
+.tab.active{background:var(--card);border-color:var(--line);color:var(--primary);font-weight:600;margin-bottom:-1px}
+.panel{display:none}.panel.active{display:block}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 12px}
+.empty{padding:48px 20px;text-align:center;color:var(--hint);font-size:13px;
+  border:1px dashed var(--line);border-radius:10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0}
+.stat{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fbfcfe}
+.stat .k{font-size:12px;color:var(--muted);margin-bottom:6px}
+.stat .v{font-size:21px;font-weight:600;letter-spacing:-.4px}
+.stat .u{font-size:12px;color:var(--hint);font-weight:400;margin-left:4px}
+.stat .d{font-size:11px;color:var(--hint);margin-top:4px}
+.table-wrap{overflow:auto;max-height:440px;border:1px solid var(--line);border-radius:10px;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line2);text-align:left}
+th{background:#f7f9fc;position:sticky;top:0;z-index:1;color:var(--muted);font-weight:600}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:hover td{background:#fafbfe}
+tr.srow{cursor:pointer}
+tr.srow.sel td{background:var(--primary-soft)}
+tr.srow td.caret{color:var(--hint);font-size:11px;text-align:center;padding-right:0;width:26px}
+tr.sdet td{padding:0 0 10px 0;background:#fbfcfe}
+.det-hint{font-size:11px;color:var(--hint);padding:8px 14px 4px}
+table.det{width:auto;min-width:640px;margin:0 12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+table.det th{background:#f2f5fa;position:static;font-size:11px}
+table.det td{font-size:11.5px;padding:6px 10px}
+table.det tr.dim td{color:var(--hint)}
+#panel-stock .table-wrap{max-height:660px}
+.chart-box{border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:12px;background:#fff}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:11px}
+.delta{font-weight:600;font-variant-numeric:tabular-nums}
+.delta.up{color:var(--ok)}.delta.down{color:var(--danger)}
+.pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;
+  background:var(--primary-soft);color:var(--primary);border:1px solid var(--primary-line)}
+.pill.add{background:var(--ok-soft);color:var(--ok);border-color:#bfe6cf}
+.pill.change{background:var(--warn-soft);color:var(--warn);border-color:#f0dcb8}
+.pill.remove{background:#f1f3f7;color:var(--muted);border-color:var(--line)}
+.pill.dim{background:#f3f0ff;color:#6d4bd8;border-color:#ded4ff}
+.src-item{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fbfcfe}
+.src-item .path{font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all;color:var(--text)}
+.src-item .meta{font-size:11px;color:var(--hint);margin-top:5px}
+.list-scroll{max-height:300px;overflow:auto}
+.frame-box{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin-top:12px}
+iframe{width:100%;height:430px;border:0;display:block;background:#fff}
+.modal-mask{position:fixed;inset:0;background:rgba(17,24,39,.35);display:none;
+  align-items:flex-start;justify-content:center;padding:50px 20px;z-index:50;overflow:auto}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px;width:min(560px,100%);box-shadow:0 12px 40px rgba(0,0,0,.14)}
+.modal.wide{width:min(980px,100%)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.close{border:none;background:transparent;font-size:20px;color:var(--hint);cursor:pointer;line-height:1}
+.captcha-row{display:flex;gap:10px;align-items:center}
+.captcha-row img{height:46px;width:130px;object-fit:contain;border:1px solid var(--line);
+  border-radius:8px;cursor:pointer;background:#fff;image-rendering:pixelated}
+.who{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:14px;
+  border:1px solid var(--line);border-radius:10px;background:#fbfcfe}
+.who .av{width:34px;height:34px;flex:none;border-radius:50%;background:var(--primary-soft);
+  color:var(--primary);display:grid;place-items:center;font-weight:700;font-size:14px}
+.who .nm{font-weight:600}
+.who .sub2{font-size:12px;color:var(--muted);line-height:1.5}
+.adv{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+.adv summary{cursor:pointer;font-size:12px;color:var(--muted);outline:none}
+.adv .adv-body{margin-top:12px}
+.login-msg{min-height:20px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6}
+.login-msg.ok{color:var(--ok)}.login-msg.bad{color:var(--danger)}
+.hidden{display:none}
+.foot{color:var(--hint);font-size:12px;text-align:center;margin-top:26px;line-height:1.9}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:#fff;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--primary);color:#fff}
+/* 类别下拉：1399 项，带搜索与层级缩进 */
+.cls-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.cls-field{min-width:0}
+.cls-field>.btn{height:36px}
+.cls-bar input[type=date]{width:158px}
+.query-hint{margin-top:10px;font-size:12px;color:var(--hint);line-height:1.7}
+.combo{position:relative;width:310px;max-width:88vw}
+.combo-trigger{width:100%;height:36px;display:flex;align-items:center;justify-content:space-between;
+  gap:8px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#fff;
+  color:var(--text);font-size:13px;cursor:pointer;text-align:left;font-family:inherit}
+.combo-trigger:hover{border-color:var(--primary-line)}
+.combo-trigger span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combo-trigger .caret{color:var(--hint);flex:none}
+.combo-panel{position:absolute;top:41px;left:0;width:380px;max-width:88vw;z-index:30;
+  background:#fff;border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 10px 30px rgba(17,24,39,.13);padding:8px}
+.combo-panel input{width:100%;margin-bottom:6px}
+.combo-list{max-height:300px;overflow:auto}
+.combo-item{padding:7px 9px;border-radius:6px;cursor:pointer;font-size:13px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combo-item:hover{background:var(--primary-soft)}
+.combo-item.sel{background:var(--primary-soft);color:var(--primary);font-weight:600}
+.combo-item .code{font-family:ui-monospace,Consolas,monospace;font-size:11px;
+  color:var(--hint);margin-right:6px}
+.combo-empty{padding:14px;text-align:center;color:var(--hint);font-size:12px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
+  margin:0;white-space:nowrap;height:36px;cursor:pointer}
+.chk input{width:auto;margin:0}
+
+/* ---------- iOS / 手机适配 ---------- */
+html{-webkit-text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right)
+          env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{-webkit-appearance:none;font-family:inherit}
+img{-webkit-user-drag:none}
+.table-wrap{-webkit-overflow-scrolling:touch}
+.combo-list,.list-scroll{-webkit-overflow-scrolling:touch}
+@media (max-width:768px){
+  .wrap{padding:12px 12px 32px}
+  .top{flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:12px}
+  .top .row{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  h1{font-size:17px}
+  .sub{font-size:12px}
+  .card{padding:12px;border-radius:12px;margin-bottom:12px}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:10px 13px;white-space:nowrap;flex:none}
+  .btn{min-height:40px;padding:9px 14px;font-size:14px}
+  .btn.sm{min-height:34px;padding:7px 11px;font-size:13px}
+  input[type=text],input[type=password],input[type=number],select,textarea{
+    font-size:16px;padding:9px 10px;border-radius:9px}
+  label{font-size:12px}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0}
+  .stat{padding:10px 12px}
+  .stat .v{font-size:18px}
+  .grid2,.grid3{grid-template-columns:1fr;gap:10px}
+  .cls-bar{flex-direction:column;align-items:stretch;gap:8px}
+  .cls-field{width:100%}
+  .cls-field>.btn{width:100%;height:42px}
+  .cls-bar input[type=date]{width:100%;height:42px}
+  .combo{width:100%;max-width:none}
+  .combo-trigger{height:42px}
+  .combo-panel{width:100%;left:0}
+  .combo-list{max-height:46vh}
+  .chk{height:42px}
+  .table-wrap{max-height:62vh;margin-top:10px}
+  #panel-stock .table-wrap{max-height:66vh}
+  th,td{padding:8px 9px}
+  th{font-size:11px}
+  table{font-size:12.5px}
+  table.det{margin:0 8px;width:calc(100% - 16px);min-width:0}
+  .toolbar{gap:6px;margin:10px 0 8px}
+  .toolbar select{width:150px;font-size:13px}
+  .seg{width:100%}
+  .seg button{flex:1;padding:9px 6px;font-size:12px}
+  .modal-mask{align-items:flex-start;padding:calc(18px + env(safe-area-inset-top)) 12px 18px}
+  .modal,.modal.wide{width:100%;padding:16px;border-radius:14px}
+  .captcha-row img{height:44px}
+  .foot{margin-top:18px}
+  .det-hint{padding:6px 10px 3px}
+  .query-hint{font-size:12px}
+}
+@media (max-width:420px){
+  .stat .v{font-size:16px}
+  .btn{padding:9px 12px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="top-left">
+      <h1>销售报表 · 本地数据仓库</h1>
+      <span class="sub">卖场商品销售汇总 · 门店销售汇总　|　后台采集，页面只读本机</span>
+    </div>
+    <div class="row">
+      <span class="badge" id="targetBadge">目标：--</span>
+      <span class="badge" id="operBadge">未登录</span>
+      <span class="badge" id="sessionBadge"><span class="dot"></span>检查中</span>
+      <span class="badge blue" id="srcBadge">已接入 2 张报表 · 自动同步</span>
+      <button class="btn" id="btnConn">登录 / 切换账号</button>
+    </div>
+  </div>
+
+  <!-- 采集状态条 -->
+  <div class="card" id="collectCard">
+    <div class="card-head">
+      <h2>采集状态</h2>
+      <div class="row">
+        <span class="badge blue" id="nextBadge">下次采集：--</span>
+        <span class="badge" id="lastBadge">尚未采集</span>
+      </div>
+    </div>
+    <div class="grid3">
+      <div>
+        <label>采集间隔（秒）</label>
+        <div class="row">
+          <input type="number" id="intervalInput" value="60" min="10" max="3600" style="width:110px">
+          <button class="btn sm" id="btnInterval">保存</button>
+        </div>
+      </div>
+      <div>
+        <label>定时任务</label>
+        <div class="row">
+          <button class="btn sm primary" id="btnRunNow">立即采集一轮</button>
+          <button class="btn sm" id="btnToggle">暂停</button>
+        </div>
+      </div>
+      <div>
+        <label>本轮结果 / 上次错误</label>
+        <div id="lastResult" class="hint" style="padding-top:6px">等待首次采集…</div>
+      </div>
+    </div>
+    <div id="sourceInfo" class="hint" style="margin-top:12px">已按网站内置取数接口，开箱即用。</div>
+    <div id="sourceWarn" class="note warn hidden" style="margin-top:12px"></div>
+  </div>
+
+  <!-- 总览指标 -->
+  <div class="card" id="ovCard">
+    <div class="card-head"><h2>本地库总览</h2><span class="hint" id="dbHint">data.db</span></div>
+    <div class="stats" id="overviewStats"><div class="hint">正在读取本地库…</div></div>
+  </div>
+
+  <!-- 两张报表 -->
+  <div class="card" style="padding-bottom:0">
+    <div class="tabs">
+      <div class="tab active" data-r="item">卖场商品销售汇总报表</div>
+      <div class="tab" data-r="shop">门店销售汇总报表</div>
+      <div class="tab" data-r="stock">实时库存</div>
+    </div>
+  </div>
+
+  <div class="panel active" id="panel-item">
+    <!-- 类别查询：把原报表里那个「类别 ...」弹窗换成自己的下拉框 -->
+    <div class="card" id="clsCard">
+      <div class="card-head">
+        <h2>按类别查询 · 卖场商品销售汇总报表</h2>
+        <span class="badge blue" id="clsCondBadge">当前：全部类别</span>
+      </div>
+      <div class="cls-bar">
+        <div class="cls-field">
+          <label>类别（支持层级，选上级自动包含所有下级）</label>
+          <div class="combo" id="clsCombo">
+            <button type="button" class="combo-trigger" id="clsBtn">
+              <span id="clsBtnText">全部类别</span><span class="caret">▾</span>
+            </button>
+            <div class="combo-panel hidden" id="clsPanel">
+              <input type="text" id="clsSearch" placeholder="输入类别名称或编码搜索…" autocomplete="off">
+              <div class="combo-list" id="clsList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="cls-field"><label>开始日期</label><input type="date" id="begin-item"></div>
+        <div class="cls-field"><label>结束日期</label><input type="date" id="end-item"></div>
+        <div class="cls-field"><label>&nbsp;</label><button class="btn primary" id="btnClsQuery">查询</button></div>
+        <div class="cls-field"><label>&nbsp;</label><button class="btn" id="btnClsReset">重置</button></div>
+        <div class="cls-field"><label>&nbsp;</label>
+          <label class="chk"><input type="checkbox" id="clsLive"> 查询时从系统取最新数据</label>
+        </div>
+        <button class="btn sm" id="btnClsReload" title="重新从业务系统拉取类别档案">刷新类别</button>
+        <span class="hint" id="clsHint">正在加载类别…</span>
+      </div>
+      <div class="query-hint" id="dateHint-item">不选日期默认查今天；选了日期就按「所选类别 + 日期区间」查询</div>
+      <div id="clsResultNote" class="note hidden" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <span class="badge" id="rowsBadge-item">0 行</span>
+        <input type="text" id="q-item" placeholder="搜索本地数据…" style="width:220px">
+        <button class="btn sm" data-act="prev" data-r="item">上一页</button>
+        <span class="hint" id="page-item">第 1 页</span>
+        <button class="btn sm" data-act="next" data-r="item">下一页</button>
+        <button class="btn sm" data-act="refresh" data-r="item">刷新</button>
+        <button class="btn sm primary" data-act="csv" data-r="item">导出 CSV（当前条件）</button>
+        <span class="hint" id="upd-item">最后更新：--</span>
+      </div>
+      <div id="stats-item"></div>
+      <div id="chart-item"></div>
+      <div id="table-item"><div class="empty">本地库还没有这张报表的数据</div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-shop">
+    <!-- 门店查询：把原报表里那个「分店 ...」弹窗换成自己的下拉框 -->
+    <div class="card" id="brCard">
+      <div class="card-head">
+        <h2>按门店查询 · 门店销售汇总报表</h2>
+        <span class="badge blue" id="brCondBadge">当前：全部门店</span>
+      </div>
+      <div class="cls-bar">
+        <div class="cls-field">
+          <label>分店 / 门店（从业务系统门店档案读取）</label>
+          <div class="combo" id="brCombo">
+            <button type="button" class="combo-trigger" id="brBtn">
+              <span id="brBtnText">全部门店</span><span class="caret">▾</span>
+            </button>
+            <div class="combo-panel hidden" id="brPanel">
+              <input type="text" id="brSearch" placeholder="输入门店名称或编码搜索…" autocomplete="off">
+              <div class="combo-list" id="brList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="cls-field"><label>开始日期</label><input type="date" id="begin-shop"></div>
+        <div class="cls-field"><label>结束日期</label><input type="date" id="end-shop"></div>
+        <div class="cls-field"><label>&nbsp;</label><button class="btn primary" id="btnBrQuery">查询</button></div>
+        <div class="cls-field"><label>&nbsp;</label><button class="btn" id="btnBrReset">重置</button></div>
+        <div class="cls-field"><label>&nbsp;</label>
+          <label class="chk"><input type="checkbox" id="brLive"> 查询时从系统取最新数据</label>
+        </div>
+        <button class="btn sm" id="btnBrReload" title="重新从业务系统拉取门店档案">刷新门店</button>
+        <span class="hint" id="brHint">正在加载门店…</span>
+      </div>
+      <div class="query-hint" id="dateHint-shop">不选日期默认查今天；选了日期就按「所选门店 + 日期区间」查询</div>
+      <div id="brResultNote" class="note hidden" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <span class="badge" id="rowsBadge-shop">0 行</span>
+        <input type="text" id="q-shop" placeholder="搜索本地数据…" style="width:220px">
+        <button class="btn sm" data-act="prev" data-r="shop">上一页</button>
+        <span class="hint" id="page-shop">第 1 页</span>
+        <button class="btn sm" data-act="next" data-r="shop">下一页</button>
+        <button class="btn sm" data-act="refresh" data-r="shop">刷新</button>
+        <button class="btn sm primary" data-act="csv" data-r="shop">导出 CSV（当前条件）</button>
+        <span class="hint" id="upd-shop">最后更新：--</span>
+      </div>
+      <div id="stats-shop"></div>
+      <div id="chart-shop"></div>
+      <div id="table-shop"><div class="empty">本地库还没有这张报表的数据</div></div>
+    </div>
+  </div>
+
+  <!-- 实时库存（库管 → 库存查询 → 实时库存） -->
+  <div class="panel" id="panel-stock">
+    <div class="card" id="stockCard">
+      <div class="card-head">
+        <h2>实时库存 · 按商品名称搜索</h2>
+        <span class="badge" id="stockBadge">未查询</span>
+      </div>
+      <div class="cls-bar">
+        <div class="cls-field" style="flex:1 1 320px">
+          <label>商品名称 / 类别 / 条码（输一部分就行，如「牛奶」「酸奶」「购物袋」）</label>
+          <input type="text" id="stockQ" placeholder="输入商品名称或类别，如「牛奶」，回车即搜索" autocomplete="off" style="width:100%">
+        </div>
+        <div class="cls-field"><label>&nbsp;</label><button class="btn primary" id="btnStockQuery">搜索库存</button></div>
+        <div class="cls-field"><label>&nbsp;</label><button class="btn" id="btnStockLive" title="对选中的那个商品，直接向业务系统取此刻的库存，约 8~20 秒">实时查询（选中项）</button></div>
+        <div class="cls-field"><label>&nbsp;</label><button class="btn" id="btnStockClear">清空</button></div>
+        <div class="cls-field"><label>&nbsp;</label>
+          <label class="chk" title="搜索时把没有库存的商品也列出来；实时查询时含零库存门店"><input type="checkbox" id="stockZero"> 含无库存商品</label>
+        </div>
+        <button class="btn sm" id="btnStockSync" title="立即向业务系统同步一轮库存">立即同步</button>
+      </div>
+      <div class="query-hint">输关键字就在本地整张库存表里搜，<b>所有名称/类别命中的商品</b>会一次列成一张表，每行点开是各门店明细。
+        数据是后台每 <b id="stockIv">60</b> 秒比对出来的本地快照，毫秒级；要看业务系统此刻的值，点「实时查询」。
+        <span id="stockHint" class="hint">正在读取同步状态…</span></div>
+      <div id="stockNote" class="note hidden" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <span class="badge" id="stockRowsBadge">0 行</span>
+        <button class="btn sm primary" data-act="stockcsv">导出 CSV</button>
+        <select id="stockSort" style="width:160px" title="搜索结果排序">
+          <option value="qty">库存多 → 少</option>
+          <option value="amt">库存金额 多 → 少</option>
+          <option value="name">按商品名称</option>
+          <option value="cls">按类别</option>
+        </select>
+        <span class="hint" id="stockUpd">--</span>
+      </div>
+      <div id="stockStats"></div>
+      <div id="stockTable"><div class="empty">输入商品名称后点「查询库存」</div></div>
+    </div>
+  </div>
+
+  <!-- 增量变更流水 -->
+  <div class="card" id="chgCard">
+    <div class="card-head">
+      <h2>增量变更流水</h2>
+      <div class="row">
+        <div class="seg" id="chgSeg">
+          <button class="on" data-k="">全部</button>
+          <button data-k="add">新增</button>
+          <button data-k="change">数值变化</button>
+          <button data-k="dim">维度变化</button>
+          <button data-k="remove">消失</button>
+        </div>
+        <select id="chgReport" style="width:200px">
+          <option value="">两张报表</option>
+          <option value="item">卖场商品销售汇总</option>
+          <option value="shop">门店销售汇总</option>
+        </select>
+        <button class="btn sm" id="btnChgRefresh">刷新</button>
+      </div>
+    </div>
+    <div class="hint" style="margin-bottom:8px">每次采集只把新增行和发生变化的数值补进本地库，未变化的行不产生记录。</div>
+    <div class="table-wrap" style="max-height:340px"><table>
+      <thead><tr><th>时间</th><th>报表</th><th>类型</th><th>记录</th><th>变化内容</th><th>差值</th></tr></thead>
+      <tbody id="chgBody"><tr><td colspan="6" class="hint">暂无变更</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <!-- 采集历史 -->
+  <div class="card">
+    <div class="card-head"><h2>采集历史</h2><button class="btn sm" id="btnSnap">展开 / 刷新</button></div>
+    <div id="snapBox" class="hidden"><div class="table-wrap" style="max-height:260px"><table>
+      <thead><tr><th>时间</th><th>报表</th><th>结果</th><th>行数</th><th>新增</th><th>变更</th><th>消失</th><th>耗时</th><th>说明</th></tr></thead>
+      <tbody id="snapBody"></tbody>
+    </table></div></div>
+  </div>
+
+  <div class="foot">
+    数据由后台按思迅商旗 10.5 内置接口定时抓取并保存在本机 data.db；页面只读取本地库，不嵌套报表页，也不每次请求业务系统。<br>
+    会话信息保存在本机 session.json，请勿把 cookie 发给他人。
+    <div class="row" style="margin-top:10px">
+      <button class="btn sm" id="btnClearData">清空本地数据</button>
+      <span class="hint" id="clearMsg">清空后后台会自动重新采全量，不影响业务系统。</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 登录 ============ -->
+<div class="modal-mask" id="connMask">
+  <div class="modal" style="width:min(470px,100%)">
+    <div class="modal-head"><h2>登录业务系统</h2><button class="close" id="btnClose">&times;</button></div>
+    <div class="who">
+      <div class="av" id="whoAv">?</div>
+      <div style="min-width:0">
+        <div class="nm" id="whoName">未登录</div>
+        <div class="sub2" id="whoSub">后台采集将使用此处登录的操作员账号</div>
+      </div>
+    </div>
+    <div class="note">请输入<b>你自己的</b>操作员账号和密码。登录后的会话保存在本机 session.json，
+      后台每 60 秒的增量采集随即改用该账号；<b>密码不写入任何文件</b>。
+      同一账号已在别处登录时会被拒绝（A006）。勾选下面的「强制登录」会调用系统的「踢出」接口
+      尝试把对方挤下线；若对方仍在活动、或该账号没有踢人权限，系统仍会拒绝——
+      此时需在原窗口退出、换一个操作员账号，或等会话超时。</div>
+
+    <div class="grid2" style="margin-top:16px">
+      <div class="field"><label>操作员账号</label>
+        <input type="text" id="loginUser" placeholder="输入操作员账号" autocomplete="username"></div>
+      <div class="field"><label>密码</label>
+        <input type="password" id="loginPwd" placeholder="输入密码" autocomplete="current-password"></div>
+    </div>
+    <div class="field">
+      <label>验证码（点图片换一张）</label>
+      <div class="captcha-row">
+        <img id="captchaImg" title="点击换一张" alt="验证码">
+        <input type="text" id="loginCode" maxlength="4" placeholder="4 位数字" style="width:130px" autocomplete="off">
+        <button class="btn sm" id="btnEnhance">增强对比</button>
+      </div>
+    </div>
+    <label class="chk" id="forceWrap" style="margin-top:12px">
+      <input type="checkbox" id="loginForce"> 强制登录（先把该账号在别处的登录踢下线；对方窗口下次操作会被要求重新登录）
+    </label>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary" id="btnLogin">登录</button>
+      <button class="btn danger hidden" id="btnLogout">退出登录</button>
+      <span class="hint">换人使用请点「退出登录」或右上角「切换账号」。</span>
+    </div>
+    <div id="loginMsg" class="login-msg"></div>
+
+    <details class="adv">
+      <summary>高级：已有会话 cookie（无法登录时才用）</summary>
+      <div class="adv-body">
+        <div class="field">
+          <label>cookie 串（可粘贴整段，也可只填 sq10_user_ctx 的值）</label>
+          <input type="text" id="cookieInput" placeholder="sq10_user_ctx=...">
+        </div>
+        <div class="row">
+          <button class="btn sm" id="btnSaveCookie">保存会话</button>
+          <button class="btn sm" id="btnClearCookie">清除会话</button>
+        </div>
+        <div class="hint" style="margin-top:8px">从已登录浏览器按 F12 → 应用 / Application → Cookies 复制 sq10_user_ctx。</div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+const APP = '/__app__';
+const REP = { item:'卖场商品销售汇总报表', shop:'门店销售汇总报表' };
+const ERR = {
+  A001:'用户名或密码不能为空', A002:'用户不存在', A003:'用户状态为无效', A004:'密码验证失败',
+  A006:'该账号已在别处登录；可勾选「强制登录」尝试踢出，若仍被拒绝需原窗口退出或等会话超时',
+  A008:'用户名不正确', A009:'账户已被禁用', A010:'账户已过期',
+  A011:'验证码不能为空', A012:'验证码错误', A013:'验证码失效，请刷新后重试', A014:'验证码标识不能为空',
+  A204:'已达到许可授权最大用户数', A205:'登录信息已掉线或被强制踢出'
+};
+const PAGE_SIZE = 100;
+let CUR='item', GUID='', OVERVIEW=null, LOGIN_AUTO=false, LOGIN_BUSY=false;
+const PAGE = { item:0, shop:0 };
+const DATA = { item:null, shop:null };
+let CHG_KIND='', CHG_REPORT='', SNAP_OPEN=false, POLL=null, LAST_SNAP=0;
+let CATS=[], CLS_SEL={id:'',name:'全部类别'}, CLS_ACTIVE={id:'',name:'全部类别'}, LIVE_MODE=false;
+let BRANCHES=[], BR_SEL={id:'',name:'全部门店'}, BR_ACTIVE={id:'',name:'全部门店'}, SHOP_LIVE=false;
+const CHART_COL = { item:'', shop:'' };
+// 两张报表各自独立的日期区间；留空 = 今天（读本机库，不请求业务系统）
+const DATE_SEL    = { item:{begin:'',end:''}, shop:{begin:'',end:''} };
+const DATE_ACTIVE = { item:{begin:'',end:''}, shop:{begin:'',end:''} };
+function todayStr(){
+  const d=new Date(), p=x=>String(x).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(n){ if(n==null||!isFinite(n)) return '-'; return Number(n).toLocaleString('zh-CN',{maximumFractionDigits:2}); }
+function num(s){
+  if(s==null) return null;
+  let t=String(s).replace(/[,，\s¥￥%％]/g,'').trim();
+  let neg = /^\(.*\)$/.test(t); if(neg) t=t.slice(1,-1);
+  if(t===''||t==='-'||t==='--'||t==='—') return null;
+  if(!/^-?\d+(\.\d+)?$/.test(t)) return null;
+  const v=Number(t); return neg?-v:v;
+}
+function isRate(n){ return /率|占比|比例|%|均价|单价|客单|平均|售价/.test(n||''); }
+function ts(v){
+  if(!v) return '--';
+  const d=new Date(v*1000); if(isNaN(d)) return '--';
+  const p=x=>String(x).padStart(2,'0');
+  return p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
+function ago(v){
+  if(!v) return '从未';
+  const s=Math.max(0,Math.round(Date.now()/1000-v));
+  if(s<60) return s+' 秒前'; if(s<3600) return Math.floor(s/60)+' 分钟前';
+  return Math.floor(s/3600)+' 小时前';
+}
+async function api(path,opt){
+  /* iOS 直连模式：JS 层实现的逻辑接口优先（见文件末尾的 iOS 引擎块） */
+  if(window.__IOS_HANDLERS__){
+    const key=path.split('?')[0];
+    const h=window.__IOS_HANDLERS__[key];
+    if(h) return await h(path,opt||{});
+    if(!key.startsWith('/Handlers')&&!key.startsWith('/@')){
+      return {success:false,mode:'ios',message:'App 直连模式暂不支持该功能：'+key};
+    }
+  }
+  if(window.__NATIVE_BRIDGE__){ return await window.__NATIVE_BRIDGE__(path,opt||{}); }
+  const r=await fetch(APP+path,Object.assign({cache:'no-store'},opt||{}));
+  return await r.json().catch(()=>({success:false,message:'响应不是 JSON'}));
+}
+function post(path,obj){ return api(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj||{})}); }
+
+/* ---------------- iOS 壳 App 桥接 ----------------
+   App 里页面跑在 sxboard:// 自定义协议下，浏览器层面的跨域不存在，
+   window.fetch 被替换成「把请求转给原生层」：原生 URLSession 直连思迅，
+   Cookie/会话/超时/重试都归原生管。电脑浏览器走原来的本地服务，互不影响。 */
+const IS_IOS_APP=(location.protocol==='sxboard:')
+  ||(location.protocol==='file:'&&window.__SXBOARD_APP__===true)
+  ||!!(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.nativeFetch);
+let IOS_MODE=false;   // /status 返回 mode=ios 后置 true：强制实时查询、隐藏本地库专属模块
+if(IS_IOS_APP&&!window.__NATIVE_BRIDGE__){
+  window.__NATIVE_BRIDGE__=function(path,opt){
+    return new Promise(function(resolve){
+      var m=(opt&&opt.method)||'GET';
+      var body=(opt&&opt.body)||'';
+      var u='sxboard://fetch?p='+encodeURIComponent(path)+'&m='+m+
+            '&b='+encodeURIComponent(body);
+      fetch(u,{cache:'no-store'}).then(function(r){
+        return r.text();
+      }).then(function(t){
+        try{ resolve(JSON.parse(t)); }
+        catch(e){ resolve({success:false,message:'桥返回不是 JSON'}); }
+      }).catch(function(e){
+        resolve({success:false,message:'桥请求失败：'+(e&&e.message||e)});
+      });
+    });
+  };
+}
+
+/* ---------------- 顶部状态 / 采集器 ---------------- */
+function renderOverview(o){
+  OVERVIEW=o;
+  $('targetBadge').textContent='目标：'+(o.target||'--').replace(/^https?:\/\//,'');
+  // 业务系统会话被挤掉 / 过期时，cookie 还在但取数会失败，必须显式提示重连
+  const cc=o.collector||{}, rrs=cc.results||{};
+  const sessBad=Object.values(rrs).some(x=>x&&!x.ok&&/未登录|掉线|会话|超时|登录/.test(x.message||''));
+  const okSession=!!o.hasSession&&!sessBad;
+  const b=$('sessionBadge');
+  b.className='badge '+(okSession?'ok':'bad');
+  b.innerHTML='<span class="dot"></span>'+(okSession?'会话已就绪':'会话已失效');
+
+  // 顶部常驻显示"当前是谁在取数"，任何人都能随时换成自己的账号
+  const op=o.operator||{}, signed=!!(op.operId||op.operName);
+  $('operBadge').textContent=signed?(op.operId+(op.operName?' · '+op.operName:'')):'未登录';
+  $('operBadge').className='badge '+(okSession?'ok':(signed?'':'bad'));
+  $('btnConn').textContent=signed?'切换账号':'登录';
+  $('whoName').textContent=signed?(op.operName||op.operId):'未登录';
+  $('whoAv').textContent=signed?String(op.operName||op.operId||'?').slice(0,1):'?';
+  $('whoSub').textContent=signed
+    ? ('账号 '+op.operId+' · '+(op.branchName||op.stockName||'业务系统')+'　|　后台采集正在使用该会话')
+    : '后台采集将使用此处登录的操作员账号';
+  $('btnLogout').classList.toggle('hidden',!signed);
+  $('dbHint').textContent=(o.dbFile||'data.db')+' · 纯本地读取';
+  if(!LOGIN_AUTO){ LOGIN_AUTO=true; if(!okSession) openLogin(); }
+
+  const c=o.collector||{};
+  const secs = Math.max(0,Math.round((c.nextRun||0)-(o.serverTime||Date.now()/1000)));
+  $('nextBadge').textContent = c.enabled ? ('下次采集：'+secs+' 秒后') : '定时采集已暂停';
+  $('nextBadge').className = 'badge '+(c.enabled?'blue':'');
+  $('lastBadge').textContent = c.lastRun ? ('上次 '+ago(c.lastRun)) : '尚未采集';
+  if(String($('intervalInput').value)!==String(c.interval||60) && document.activeElement!==$('intervalInput'))
+    $('intervalInput').value=c.interval||60;
+  $('btnToggle').textContent = c.enabled ? '暂停' : '继续';
+
+  const rs=c.results||{};
+  const parts=Object.keys(REP).map(k=>{
+    const r=rs[k];
+    if(!r) return null;
+    if(r.skipped) return REP[k]+'：'+r.message;
+    if(!r.ok) return REP[k]+'：'+(r.message||'失败');
+    return REP[k]+'：新增 '+fmt(r.added)+' / 变更 '+fmt(r.changed)+' / 消失 '+fmt(r.removed);
+  }).filter(Boolean);
+  $('lastResult').innerHTML = parts.length ? esc(parts.join('　·　')) :
+    (c.lastError ? '<span style="color:var(--danger)">'+esc(c.lastError)+'</span>' : '等待首次采集…');
+
+  // 取数接口已按网站内置，这里只做只读展示，用户无需任何设置
+  const src=o.sources||{};
+  $('srcBadge').textContent='已接入 '+Object.keys(REP).filter(k=>src[k]&&src[k].path).length+' 张报表 · 自动同步';
+  $('sourceInfo').innerHTML='已按思迅商旗 10.5 内置取数接口：<b>'+
+    esc((src.item&&src.item.path)||'/api/RptItemSaleSummary/Query')+'（5402 卖场商品汇总）</b>、<b>'+
+    esc((src.shop&&src.shop.path)||'/api/RptStoreSaleSummary/Query')+'（5405 门店汇总）</b>；'+
+    '后台每 '+fmt(c.interval||60)+' 秒比对一次，只把新增和变化的数据补进本机，<b>开箱即用、无需手动配置</b>。';
+  const missing=Object.keys(REP).filter(k=>!(src[k]&&src[k].path));
+  const w=$('sourceWarn');
+  if(sessBad){
+    w.classList.remove('hidden');
+    w.innerHTML='<b>业务系统会话已失效：</b>点右上角「登录 / 切换账号」，用你自己的操作员账号重新登录；本地已有数据仍可正常查看。';
+  }else if(missing.length){
+    w.classList.remove('hidden');
+    w.innerHTML='<b>取数配置异常：</b>后台会自动按网站内置接口恢复，稍等几秒即可；若一直如此，请重启 start.bat。';
+  }else w.classList.add('hidden');
+
+  // 总览指标卡
+  const reps=o.reports||[];
+  const totalRows=reps.reduce((a,x)=>a+(x.activeRows||0),0);
+  const totalChg=reps.reduce((a,x)=>a+(x.totalChanges||0),0);
+  const last=reps.map(x=>x.lastSnapshot).filter(Boolean).sort((a,b)=>b.ts-a.ts)[0];
+  const lastAdd=last?(last.added||0):0, lastChange=last?(last.changed||0):0;
+  $('overviewStats').innerHTML=
+    '<div class="stat"><div class="k">本地数据行</div><div class="v">'+fmt(totalRows)+'</div><div class="d">两张报表当前有效行</div></div>'+
+    '<div class="stat"><div class="k">累计增量记录</div><div class="v">'+fmt(totalChg)+'</div><div class="d">新增 + 数值变化 + 消失</div></div>'+
+    '<div class="stat"><div class="k">最近一轮补充</div><div class="v">'+fmt(lastAdd+lastChange)+'</div><div class="d">新增 '+fmt(lastAdd)+' · 变化 '+fmt(lastChange)+'</div></div>'+
+    '<div class="stat"><div class="k">最后落库</div><div class="v" style="font-size:17px">'+esc(last?ago(last.ts):'--')+'</div><div class="d">'+esc(last?ts(last.ts):'尚无快照')+'</div></div>'+
+    reps.map(x=>'<div class="stat"><div class="k">'+esc(x.name)+'</div><div class="v">'+fmt(x.activeRows)+'</div>'+
+      '<div class="d">'+esc(x.metCols.length)+' 个数值列 · '+fmt(x.totalChanges)+' 条变更</div></div>').join('');
+
+  reps.forEach(x=>{
+    const st=x.lastSnapshot;
+    $('upd-'+x.report).textContent='最后更新：'+(st?ts(st.ts):'--');
+  });
+  const ns=last?(last.ts||0):0;
+  // 实时查询视图由用户手动触发，不被后台自动刷新覆盖（只判断当前这张报表）
+  const curLive=liveOn(CUR);
+  if(ns && ns!==LAST_SNAP && !curLive){ LAST_SNAP=ns; loadData(); }
+}
+
+/* ---------------- 日期条件：与类别 / 门店一起由唯一的「查询」按钮生效 ---------------- */
+function datePicked(rep){ const a=DATE_ACTIVE[rep]; return !!(a.begin||a.end); }
+function activeRange(rep){
+  const t=todayStr(), a=DATE_ACTIVE[rep];
+  return {begin:a.begin||t,end:a.end||t};
+}
+function dateLabel(rep){
+  const r=activeRange(rep), t=todayStr();
+  if(r.begin===r.end) return r.begin===t?('今天（'+t+'）'):r.begin;
+  return r.begin+' ~ '+r.end;
+}
+function syncDateUI(rep){
+  const s=DATE_SEL[rep];
+  $('begin-'+rep).value=s.begin||'';
+  $('end-'+rep).value=s.end||'';
+  $('dateHint-'+rep).textContent=datePicked(rep)
+    ? '当前查询：'+dateLabel(rep)+' · 与类别 / 门店叠加，按区间向业务系统取数（实时）'
+    : '不选日期 = 按所选类别 / 门店查今天（读本机库，秒开）；选了日期 = 按「类别 / 门店 + 日期区间」查询';
+}
+function applyDateSelection(rep){
+  // 两个日期都留空 = 今天；只填一个 = 查那一天
+  let b=$('begin-'+rep).value||'', e=$('end-'+rep).value||'';
+  if(b&&!e) e=b;
+  if(e&&!b) b=e;
+  if(b&&e&&b>e){ showNote(rep,'开始日期不能晚于结束日期','warn'); return false; }
+  DATE_SEL[rep]={begin:b,end:e}; DATE_ACTIVE[rep]={begin:b,end:e};
+  return true;
+}
+
+/* ---------------- 报表数据（纯本地） ---------------- */
+function renderStats(d,rep){
+  const st=OVERVIEW&&(OVERVIEW.reports||[]).find(x=>x.report===rep);
+  if(!st){ $('stats-'+rep).innerHTML=''; return; }
+  const filtered=!!(d&&d.summary&&Object.keys(d.summary).length)||
+                  !!(d&&d.total===0&&(d.cls||d.branch||d.live));
+  const cs=filtered?d.summary:(st.colStats||{});
+  const keys=Object.keys(cs).slice(0,4);
+  let h='<div class="stats">';
+  h+='<div class="stat"><div class="k">'+(filtered?'筛选后行数':'本地行数')+'</div>'+
+     '<div class="v">'+fmt(d&&d.total!=null?d.total:st.activeRows)+'</div></div>';
+  keys.forEach(k=>{
+    const c=cs[k], v=isRate(k)?c.avg:c.sum;
+    h+='<div class="stat"><div class="k">'+(isRate(k)?'平均 ':'合计 ')+esc(k)+'</div><div class="v">'+esc(fmt(v))+'</div></div>';
+  });
+  h+='</div>';
+  $('stats-'+rep).innerHTML=h;
+}
+/* 图表标签优先用品名 / 门店名称，别再显示看不懂的条码、编码 */
+function chartLabelCol(d,rep){
+  const dims=d.dimCols||[];
+  const prefer=rep==='item'?/商品名称|品名|名称/:/门店名称|名称|品名/;
+  return dims.find(x=>prefer.test(x)) || dims.find(x=>/名称|品名/.test(x)) || dims[0] || '';
+}
+/* 排行榜默认按销售额，且基于「当前条件下全部数据」降序，不拿分页前 10 行充数 */
+function chartDefaultCol(d){
+  const cols=d.metCols||[];
+  return cols.find(x=>/销售金额|销售额/.test(x)) || cols[0] || '';
+}
+function barChart(d,rep,pick){
+  const cols=d.metCols||[];
+  if(!cols.length){ $('chart-'+rep).innerHTML=''; return; }
+  const col=(pick&&cols.includes(pick))?pick:chartDefaultCol(d);
+  if(!col){ $('chart-'+rep).innerHTML=''; return; }
+  CHART_COL[rep]=col;
+  const nameCol=chartLabelCol(d,rep);
+  let top=(d.topByCol&&d.topByCol[col])||[];
+  if(!top.length){
+    // 兼容没有排行字段的旧响应：至少对当前页按数值降序
+    top=(d.rows||[]).map(r=>{
+      const p=r.payload||{};
+      return {label:String(p[nameCol]||'-'),code:'',value:num(p[col])||0};
+    }).sort((a,b)=>b.value-a.value).slice(0,10);
+  }
+  if(!top.length){ $('chart-'+rep).innerHTML=''; return; }
+  const max=Math.max(1,...top.map(x=>Math.abs(x.value)));
+  const W=720,L=230,RH=26,H=top.length*RH+34;
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" role="img">';
+  top.forEach((x,k)=>{
+    const y=14+k*RH,w=Math.max(2,(Math.abs(x.value)/max)*(W-L-100));
+    const s=String(x.label); const label=s.length>18?s.slice(0,18)+'…':s;
+    const tip=(x.code&&x.code!==s?x.code+' · ':'')+s;
+    svg+='<text x="'+(L-10)+'" y="'+(y+14)+'" text-anchor="end" font-size="12" fill="#374151">'+
+      '<title>'+esc(tip)+'</title>'+esc(label)+'</text>';
+    svg+='<rect x="'+L+'" y="'+y+'" width="'+w+'" height="16" rx="4" fill="#2563eb" opacity="'+(0.95-k*0.055)+'"/>';
+    svg+='<text x="'+(L+w+8)+'" y="'+(y+13)+'" font-size="12" fill="#1f2937">'+esc(fmt(x.value))+'</text>';
+  });
+  svg+='</svg>';
+  $('chart-'+rep).innerHTML='<div class="chart-box"><div class="row" style="justify-content:space-between;margin-bottom:8px">'+
+    '<h3>'+esc(col)+' 前 10 名 · 按'+(nameCol?esc(nameCol):'商品')+'排行</h3>'+
+    '<select id="chartCol-'+rep+'" style="width:190px">'+
+    cols.map(x=>'<option value="'+esc(x)+'" '+(x===col?'selected':'')+'>'+esc(x)+'</option>').join('')+
+    '</select></div>'+svg+'</div>';
+  const sel=$('chartCol-'+rep);
+  if(sel) sel.onchange=()=>barChart(d,rep,sel.value);
+}
+function condLabel(rep,d){
+  const c=rep==='shop'
+    ? (BR_ACTIVE.id?(BR_ACTIVE.id+' · '+BR_ACTIVE.name):'全部门店')
+    : (d.cls?((CLS_ACTIVE.id===d.cls)?(d.cls+' · '+CLS_ACTIVE.name):d.cls):'全部类别');
+  return c+' · '+dateLabel(rep);
+}
+function hasCond(rep,d){
+  return !!(d.cls||d.branch||d.live||datePicked(rep));
+}
+function renderTable(d,rep){
+  $('rowsBadge-'+rep).textContent=fmt(d.total)+' 行';
+  $('page-'+rep).textContent='第 '+(Math.floor(d.offset/PAGE_SIZE)+1)+' / '+Math.max(1,Math.ceil(d.total/PAGE_SIZE))+' 页';
+  if(!d.rows.length){
+    const cond=hasCond(rep,d);
+    $('table-'+rep).innerHTML='<div class="empty">'+
+      (cond?('当前条件「'+esc(condLabel(rep,d))+'」下没有匹配的数据'+(d.live?'（业务系统实时结果）':'')):
+            '本地库还没有数据（或搜索无结果）')+'</div>';
+    $('chart-'+rep).innerHTML='';
+    renderStats(d,rep);
+    return;
+  }
+  const hs=d.headers&&d.headers.length?d.headers:Object.keys(d.rows[0].payload);
+  let h='<div class="table-wrap"><table><thead><tr>'+hs.map(x=>'<th>'+esc(x)+'</th>').join('')+
+    '<th>更新次数</th><th>最后变化</th></tr></thead><tbody>';
+  d.rows.forEach(r=>{
+    h+='<tr>'+hs.map(k=>{
+      const v=r.payload[k], n=num(v);
+      return '<td'+(n!==null?' class="num"':'')+'>'+esc(v||'')+'</td>';
+    }).join('')+'<td class="num">'+esc(r.rev)+'</td><td class="hint">'+esc(ts(r.updatedAt))+'</td></tr>';
+  });
+  h+='</tbody></table></div><div class="hint" style="margin-top:6px">当前显示 '+fmt(d.rows.length)+' 行；导出 CSV 为当前条件下的全部数据。</div>';
+  if(hasCond(rep,d)){
+    h+='<div class="note '+(d.live?'ok':'')+'" style="margin-top:8px">当前条件：<b>'+
+      esc(condLabel(rep,d))+'</b> · '+(d.live?'业务系统实时数据（未写入本地库）':'本地库筛选')+
+      ' · 命中 '+fmt(d.total)+' 行</div>';
+  }
+  $('table-'+rep).innerHTML=h;
+  renderStats(d,rep);
+  barChart(d,rep,CHART_COL[rep]||null);
+}
+async function loadData(){
+  const rep=CUR;
+  if(liveOn(rep)){ await liveQuery(); return; }
+  const q=encodeURIComponent(($('q-'+rep).value||'').trim());
+  const cls=(rep==='item'&&CLS_ACTIVE.id)?'&cls='+encodeURIComponent(CLS_ACTIVE.id):'';
+  const br=(rep==='shop'&&BR_ACTIVE.id)?'&branch='+encodeURIComponent(BR_ACTIVE.id):'';
+  const url='/data?report='+rep+'&q='+q+cls+br+'&limit='+PAGE_SIZE+'&offset='+(PAGE[rep]*PAGE_SIZE);
+  const d=await api(url);
+  if(!d||!d.headers) return;
+  DATA[rep]=d; renderTable(d,rep);
+}
+
+/* ---------------- 类别下拉 + 查询 ---------------- */
+function updateClsBtn(){
+  $('clsBtnText').textContent = CLS_SEL.id ? (CLS_SEL.id+' · '+CLS_SEL.name) : '全部类别';
+}
+function updateClsCond(){
+  const label=CLS_ACTIVE.id?(CLS_ACTIVE.id+' · '+CLS_ACTIVE.name):'全部类别';
+  const live=liveOn('item');
+  $('clsCondBadge').textContent='当前：'+label+' · '+dateLabel('item')+(live?' · 实时':' · 本地');
+  $('clsCondBadge').className='badge '+(live?'':'blue');
+}
+function renderClsList(q){
+  q=(q||'').trim();
+  const all=[{id:'',name:'全部类别',level:0}].concat(CATS);
+  const list=all.filter(x=>!q||x.name.includes(q)||String(x.id).includes(q));
+  const shown=list.slice(0,300);
+  let html='';
+  if(!shown.length){
+    html='<div class="combo-empty">没有匹配的类别</div>';
+  }else{
+    html=shown.map(x=>{
+      const indent='　'.repeat(Math.max(0,(x.level||1)-1));
+      return '<div class="combo-item '+(x.id===CLS_SEL.id?'sel':'')+'" data-id="'+esc(x.id)+
+        '" data-name="'+esc(x.name)+'">'+(x.id?'<span class="code">'+esc(x.id)+'</span>':'')+
+        esc(indent+x.name)+'</div>';
+    }).join('');
+    if(list.length>shown.length){
+      html+='<div class="combo-empty">还有 '+fmt(list.length-shown.length)+' 项，输入关键字继续筛选</div>';
+    }
+  }
+  $('clsList').innerHTML=html;
+}
+async function loadCategories(force){
+  const r=await api('/categories'+(force?'?refresh=1':''));
+  if(!r||!r.rows){ $('clsHint').textContent='类别加载失败'; return; }
+  CATS=r.rows;
+  const src={system:'业务系统实时拉取',cache:'本机缓存',local:'本地库兜底'}[r.source]||r.source||'';
+  $('clsHint').textContent='类别 '+fmt(CATS.length)+' 项 · '+src+(r.message?'（'+r.message+'）':'');
+  $('clsSearch').placeholder='输入类别名称或编码搜索（共 '+CATS.length+' 项）';
+  updateClsBtn(); renderClsList($('clsSearch').value);
+}
+function noteBox(rep){ return rep==='item'?$('clsResultNote'):$('brResultNote'); }
+function showNote(rep,text,kind){
+  const n=noteBox(rep);
+  n.className='note'+(kind?' '+kind:'');
+  n.innerHTML=text;
+  n.classList.remove('hidden');
+}
+function showClsNote(text,kind){ showNote('item',text,kind); }
+function hideNote(rep){ noteBox(rep).classList.add('hidden'); }
+/* 实时视图 = 选了任意日期，或勾选「取最新」；两者都不被后台自动刷新覆盖 */
+function liveOn(rep){ return datePicked(rep)||(rep==='item'?LIVE_MODE:SHOP_LIVE); }
+function setLive(rep,on){
+  if(rep==='item'){ LIVE_MODE=on; $('clsLive').checked=on; updateClsCond(); }
+  else{ SHOP_LIVE=on; $('brLive').checked=on; updateBrCond(); }
+}
+function reloadView(){ return liveOn(CUR)?liveQuery():loadData(); }
+async function doClsQuery(){
+  if(!applyDateSelection('item')) return;
+  CLS_ACTIVE={id:CLS_SEL.id,name:CLS_SEL.name};
+  PAGE.item=0; CHART_COL.item='';
+  syncDateUI('item'); hideNote('item');
+  setLive('item',$('clsLive').checked);
+  await reloadView();
+}
+async function liveQuery(){
+  const rep=CUR, item=(rep==='item');
+  const cond=item?CLS_ACTIVE:BR_ACTIVE;
+  const rng=activeRange(rep);
+  const label=cond.id?(cond.id+' · '+cond.name):(item?'全部类别':'全部门店');
+  showNote(rep,'正在从业务系统按「'+esc(dateLabel(rep))+' / '+esc(label)+'」查询…','');
+  const r=await post('/query',{
+    report:rep, begin:rng.begin, end:rng.end,
+    cls:item?cond.id:'', branch:item?'':cond.id,
+    q:($('q-'+rep).value||'').trim(),
+    limit:PAGE_SIZE, offset:PAGE[rep]*PAGE_SIZE
+  });
+  if(r.error||!r.headers){
+    showNote(rep,'查询失败：'+esc(r.error||r.message||'未知错误')+
+      (datePicked(rep)?'，请检查日期区间或会话是否失效。':'，已自动改用本地库数据。'),'warn');
+    if(!datePicked(rep)&&!IOS_MODE){ setLive(rep,false); await loadData(); }
+    return;
+  }
+  DATA[rep]=r; renderTable(r,rep);
+  const s=(r.summary||{})['销售金额'];
+  showNote(rep,'查询完成：<b>'+esc(dateLabel(rep))+'</b> · 命中 <b>'+fmt(r.total)+'</b> 行'+
+    (s?'，销售金额合计 <b>'+fmt(s.sum)+'</b> 元':'')+'，耗时 '+fmt(r.durationMs)+' ms'+
+    (r.cached?'（同条件 20 秒内复用缓存）':'')+
+    (IOS_MODE?'。':'。业务系统实时数据，未写入本地库，不影响后台增量采集。'),'ok');
+}
+function resetCls(){
+  CLS_SEL={id:'',name:'全部类别'}; CLS_ACTIVE={id:'',name:'全部类别'};
+  DATE_SEL.item={begin:'',end:''}; DATE_ACTIVE.item={begin:'',end:''};
+  LIVE_MODE=false; PAGE.item=0; CHART_COL.item='';
+  $('clsLive').checked=false; $('q-item').value='';
+  hideNote('item'); syncDateUI('item');
+  updateClsBtn(); updateClsCond(); renderClsList($('clsSearch').value);
+  reloadView();
+}
+
+/* ---------------- 实时库存（按商品名称查） ---------------- */
+let STOCK_DATA=null, STOCK_PICK=null, STOCK_BUSY=false, STOCK_TIMER=null;
+let STOCK_ROWS=[], STOCK_SRC='local';
+let STOCK_ITEMS=[], STOCK_OPEN={}, STOCK_SORT='qty';
+
+function setStockNote(text,kind){
+  const n=$('stockNote');
+  n.className='note'+(kind?' '+kind:'');
+  n.innerHTML=text||'';
+  n.classList.toggle('hidden',!text);
+}
+async function stockSyncStatus(){
+  if(STOCK_TIMER){ clearTimeout(STOCK_TIMER); STOCK_TIMER=null; }
+  try{
+    const r=await api('/stock/sync');
+    const s=r.sync||{}, lr=s.lastResult||null;
+    if(s.interval) $('stockIv').textContent=s.interval;
+    const parts=['本地快照 '+fmt(r.activeRows||0)+' 行',
+                 fmt(r.items||0)+' 个商品',
+                 fmt(r.branches||0)+' 个门店'];
+    if(lr) parts.push('本轮 新增'+lr.added+' / 变更'+lr.changed+' / 消失'+lr.removed+
+                      '，耗时 '+Math.round((lr.durationMs||0)/1000)+' 秒');
+    if(s.lastRun) parts.push('上次同步 '+new Date(s.lastRun*1000).toLocaleTimeString('zh-CN',{hour12:false}));
+    let hint=parts.join(' · ');
+    if(s.running) hint+=' · 正在同步…';
+    if(s.lastError) hint+=' · '+s.lastError;
+    $('stockHint').textContent=hint;
+    if(s.running) STOCK_TIMER=setTimeout(stockSyncStatus,5000);
+    else if(!r.activeRows) STOCK_TIMER=setTimeout(stockSyncStatus,8000);
+  }catch(e){
+    $('stockHint').textContent='同步状态读取失败，可点「立即同步」重试';
+  }
+}
+async function doStockQuery(){
+  if(STOCK_BUSY) return;
+  const q=$('stockQ').value.trim();
+  if(!q){ setStockNote('请输入商品名称或类别，例如「牛奶」','warn'); $('stockQ').focus(); return; }
+  STOCK_BUSY=true; $('btnStockQuery').disabled=true;
+  setStockNote('正在本地库存里搜索「'+esc(q)+'」…','');
+  try{
+    const zero=$('stockZero').checked?'&zero=1':'';
+    const r=await api('/stock/query?q='+encodeURIComponent(q)+zero);
+    if(r.error){ setStockNote('查询失败：'+esc(r.error),'bad'); return; }
+    STOCK_PICK=null; STOCK_OPEN={};
+    const its=r.items||[];
+    if(its.length&&its.length<=3) its.forEach(x=>{ STOCK_OPEN[x.itemNo]=true; });
+    renderStockSearch(r);
+  }catch(e){
+    setStockNote('查询失败：'+esc(e.message||e),'bad');
+  }finally{
+    STOCK_BUSY=false; $('btnStockQuery').disabled=false;
+  }
+}
+/* 搜索结果：一个商品一行，点行展开各门店明细 */
+function sortStockItems(items){
+  const a=items.slice();
+  const key=STOCK_SORT;
+  a.sort((x,y)=>{
+    if(key==='qty') return (y.qty-x.qty)||x.itemName.localeCompare(y.itemName);
+    if(key==='amt') return (y.amt-x.amt)||x.itemName.localeCompare(y.itemName);
+    if(key==='cls') return (x.clsName||'').localeCompare(y.clsName||'')||x.itemName.localeCompare(y.itemName);
+    return (x.itemName||'').localeCompare(y.itemName||'','zh');
+  });
+  return a;
+}
+function renderStockSearch(r){
+  STOCK_DATA=r; STOCK_SRC='local'; STOCK_ITEMS=r.items||[];
+  const s=r.summary||{}; const items=sortStockItems(STOCK_ITEMS);
+  const at=r.dataAt?new Date(r.dataAt*1000).toLocaleString('zh-CN',{hour12:false}):'';
+  $('stockBadge').textContent=r.keyword?('「'+r.keyword+'」'):'搜索结果';
+  $('stockBadge').className='badge blue';
+  $('stockUpd').textContent='本地快照 · '+(at||'--');
+  $('stockRowsBadge').textContent=fmt(STOCK_ITEMS.length)+' 个商品';
+  $('stockStats').innerHTML='<div class="stats">'+
+    '<div class="stat"><div class="k">命中商品</div><div class="v">'+fmt(s.itemCount||0)+
+      '<span class="u">个</span></div></div>'+
+    '<div class="stat"><div class="k">其中有库存</div><div class="v">'+fmt(s.withStock||0)+
+      '<span class="u">个</span></div></div>'+
+    '<div class="stat"><div class="k">库存金额合计</div><div class="v">'+fmt(s.totalAmt||0)+'</div></div>'+
+    '<div class="stat"><div class="k">门店明细行</div><div class="v">'+fmt(s.rowCount||0)+'</div></div>'+
+  '</div>';
+  if(!items.length){
+    $('stockTable').innerHTML='<div class="empty">'+esc(r.message||'没有匹配的商品，换个关键字试试')+'</div>';
+    setStockNote(esc(r.message||'没有匹配的商品'),'warn');
+    return;
+  }
+  const cols=['商品编码','商品名称','类别','单位','规格','总库存','库存金额','售价','有货门店'];
+  let t='<div class="table-wrap"><table><thead><tr><th></th>'+
+        cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>';
+  items.forEach((x,i)=>{
+    const open=!!STOCK_OPEN[x.itemNo];
+    const sel=STOCK_PICK&&STOCK_PICK.item_no===x.itemNo;
+    t+='<tr class="srow'+(sel?' sel':'')+'" data-i="'+i+'">'+
+      '<td class="caret">'+(open?'▾':'▸')+'</td>'+
+      '<td>'+esc(x.itemNo)+'</td>'+
+      '<td><b>'+esc(x.itemName||'-')+'</b></td>'+
+      '<td>'+esc(x.clsName||'-')+'</td>'+
+      '<td>'+esc(x.unit||'-')+'</td>'+
+      '<td>'+esc(x.spec||'-')+'</td>'+
+      '<td class="num">'+fmt(x.qty)+'</td>'+
+      '<td class="num">'+fmt(x.amt)+'</td>'+
+      '<td class="num">'+(x.price?fmt(x.price):'-')+'</td>'+
+      '<td class="num">'+(x.branchCount||0)+'</td>'+
+    '</tr>';
+    if(open) t+=stockDetailRow(x);
+  });
+  t+='</tbody></table></div>';
+  $('stockTable').innerHTML=t;
+  $('stockTable').querySelectorAll('.srow').forEach(tr=>{
+    tr.onclick=()=>{
+      const x=items[Number(tr.dataset.i)];
+      if(!x) return;
+      STOCK_PICK={item_no:x.itemNo,item_name:x.itemName};
+      STOCK_OPEN[x.itemNo]=!STOCK_OPEN[x.itemNo];
+      renderStockSearch(r);
+    };
+  });
+  let note='本地快照：「<b>'+esc(r.keyword||'')+'</b>」命中 <b>'+fmt(STOCK_ITEMS.length)+
+           '</b> 个商品，点行首三角展开门店明细';
+  if(r.zeroHidden) note+='；另有 '+fmt(r.zeroHidden)+' 个暂无库存未显示（勾选「含无库存商品」可看全）';
+  if(r.truncated) note+='；结果太多已截断，把关键字写细一点';
+  note+=' · 耗时 '+fmt(r.durationMs)+' ms'+(at?('（数据时间 '+at+'）'):'');
+  setStockNote(note,'ok');
+}
+function stockDetailRow(x){
+  const br=x.branches||[];
+  if(!br.length)
+    return '<tr class="sdet"><td colspan="10" class="det-hint">'+
+      (x.noBranches?'这是最近的查询记录，点「实时查询（选中项）」可取各门店明细'
+                   :'这个商品在本地快照里没有门店库存记录（已售完）')+'</td></tr>';
+  let h='<tr class="sdet"><td colspan="10">'+
+    '<div class="det-hint">'+esc(x.itemName)+'（'+esc(x.itemNo)+'）在各门店 / 仓库的库存：</div>'+
+    '<table class="det"><thead><tr><th>门店 / 仓库</th><th>库存数量</th><th>库存金额</th>'+
+    '<th>平均成本</th><th>售价</th><th>库位</th><th>状态</th></tr></thead><tbody>';
+  br.forEach(b=>{
+    const zero=Math.abs(Number(b.qty)||0)<1e-9;
+    h+='<tr'+(zero?' class="dim"':'')+'>'+
+      '<td>'+esc(b.branchName||b.branchNo)+'</td>'+
+      '<td class="num">'+fmt(b.qty)+'</td>'+
+      '<td class="num">'+fmt(b.amt)+'</td>'+
+      '<td class="num">'+(b.cost?fmt(b.cost):'-')+'</td>'+
+      '<td class="num">'+(b.price?fmt(b.price):'-')+'</td>'+
+      '<td>'+esc(b.place||'-')+'</td>'+
+      '<td>'+esc(b.status||'-')+'</td>'+
+    '</tr>';
+  });
+  return h+'</tbody></table></td></tr>';
+}
+async function stockLoad(itemNo,itemName,live){
+  const zero=(live&&$('stockZero')&&$('stockZero').checked)?'&zero=1':'';
+  setStockNote(live
+    ? ('正在向业务系统取「'+esc(itemName||itemNo)+'」的实时库存…'+
+       (zero?'（含零库存门店，约 15~25 秒）':'（约 8~20 秒）'))
+    : ('正在读取「'+esc(itemName||itemNo)+'」的本地库存…'),'');
+  try{
+    const r=await api('/stock/query?item_no='+encodeURIComponent(itemNo)+
+      (live?('&live=1'+zero):''));
+    if(r.error){ setStockNote('查询失败：'+esc(r.error),'bad'); return; }
+    applyStock(r,!!live);
+  }catch(e){
+    setStockNote('查询失败：'+esc(e.message||e),'bad');
+  }
+}
+function applyStock(r,live){
+  STOCK_DATA=r; STOCK_SRC=live?'live':'local';
+  renderStock(r);
+  const s=r.summary||{};
+  const nm=esc(r.itemName||r.itemNo);
+  $('stockBadge').textContent=r.itemName||r.itemNo||'未查询';
+  $('stockBadge').className='badge '+(live?'bad':'blue');
+  const at=r.dataAt?new Date(r.dataAt*1000).toLocaleString('zh-CN',{hour12:false}):'';
+  $('stockUpd').textContent=(live?'业务系统实时数据 · ':'本地快照 · ')+
+    (live?new Date().toLocaleString('zh-CN',{hour12:false}):(at||'--'));
+  if(!(r.rows||[]).length){
+    setStockNote('「'+nm+'」'+(live
+      ? '在业务系统里各门店/仓库都没有库存记录。'
+      : '在本地快照里没有库存记录（可能已售完），可点「实时查询」确认。'),'warn');
+    return;
+  }
+  setStockNote((live?'业务系统实时数据':'本地快照')+' · 单个商品明细：<b>'+nm+'</b>（'+esc(r.itemNo)+'）· '+
+    (s.rowCount||0)+' 个门店/仓库 · 总库存 <b>'+fmt(s.totalQty)+' '+esc(r.unit||'')+'</b>'+
+    ' · 有货门店 '+fmt(s.branchCount)+' 个 · 耗时 '+fmt(r.durationMs)+' ms'+
+    (live?'（业务系统此刻数据，点「搜索库存」可回到列表）':(at?('（数据时间 '+at+'）'):'')),'ok');
+}
+function renderStock(r){
+  const s=r.summary||{};
+  $('stockStats').innerHTML='<div class="stats">'+
+    '<div class="stat"><div class="k">总库存</div><div class="v">'+fmt(s.totalQty)+
+      '<span class="u">'+esc(r.unit||'')+'</span></div></div>'+
+    '<div class="stat"><div class="k">库存金额</div><div class="v">'+fmt(s.totalAmt)+'</div></div>'+
+    '<div class="stat"><div class="k">有货门店 / 仓库</div><div class="v">'+fmt(s.branchCount)+'</div></div>'+
+    '<div class="stat"><div class="k">明细行</div><div class="v">'+fmt(s.rowCount)+'</div></div>'+
+  '</div>';
+  const rows=r.rows||[];
+  $('stockRowsBadge').textContent=rows.length+' 行';
+  if(!rows.length){
+    $('stockTable').innerHTML='<div class="empty">'+(STOCK_SRC==='live'
+      ? '该商品在业务系统里各门店/仓库都没有库存记录'
+      : '本地快照里没有这个商品的库存记录（可能已售完），可点「实时查询」确认')+'</div>';
+    return;
+  }
+  const cols=['门店 / 仓库','编码','商品名称','单位','库存数量','库存金额','平均成本','售价','库位','近7天销量','近30天销量','状态'];
+  let t='<div class="table-wrap"><table><thead><tr>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+
+        '</tr></thead><tbody>';
+  rows.forEach(x=>{
+    t+='<tr>'+
+      '<td>'+esc(x.branchName||x.branchNo)+'</td>'+
+      '<td>'+esc(x.itemNo)+'</td>'+
+      '<td>'+esc(x.itemName)+'</td>'+
+      '<td>'+esc(x.unit)+'</td>'+
+      '<td class="num">'+fmt(x.qty)+'</td>'+
+      '<td class="num">'+fmt(x.amt)+'</td>'+
+      '<td class="num">'+(x.cost==null?'-':fmt(x.cost))+'</td>'+
+      '<td class="num">'+(x.price==null?'-':fmt(x.price))+'</td>'+
+      '<td>'+esc(x.place||'-')+'</td>'+
+      '<td class="num">'+fmt(x.sale7==null?0:x.sale7)+'</td>'+
+      '<td class="num">'+fmt(x.sale30==null?0:x.sale30)+'</td>'+
+      '<td>'+esc(x.status||'-')+'</td>'+
+    '</tr>';
+  });
+  t+='</tbody></table></div>';
+  $('stockTable').innerHTML=t;
+}
+function stockCsv(){
+  if(STOCK_DATA&&STOCK_DATA.mode==='search'){
+    const items=STOCK_DATA.items||[];
+    if(!items.length){ setStockNote('还没有可导出的数据，先搜一个关键字。','warn'); return; }
+    const head=['商品编码','商品名称','类别','单位','规格','门店/仓库','库存数量','库存金额','平均成本','售价','库位','状态','商品总库存'];
+    const lines=[head.join(',')];
+    items.forEach(it=>{
+      (it.branches||[]).forEach(b=>{
+        lines.push([it.itemNo,it.itemName,it.clsName,it.unit,it.spec,b.branchName||b.branchNo,
+                    b.qty,b.amt,b.cost,b.price,b.place,b.status,it.qty]
+          .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(','));
+      });
+      if(!(it.branches||[]).length){
+        lines.push([it.itemNo,it.itemName,it.clsName,it.unit,it.spec,'','0','0','','','','','0']
+          .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(','));
+      }
+    });
+    downloadCsv(lines,'库存搜索_'+(STOCK_DATA.keyword||''));
+    return;
+  }
+  const rows=(STOCK_DATA&&STOCK_DATA.rows)||[];
+  if(!rows.length){ setStockNote('还没有可导出的数据，先查一个商品。','warn'); return; }
+  const head=['门店/仓库','编码','商品名称','单位','库存数量','库存金额','平均成本','售价','库位','状态'];
+  const lines=[head.join(',')];
+  rows.forEach(x=>{
+    lines.push([x.branchName,x.itemNo,x.itemName,x.unit,x.qty,x.amt,
+                x.cost==null?'':x.cost,x.price==null?'':x.price,x.place,x.status]
+      .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(','));
+  });
+  downloadCsv(lines,'实时库存_'+(STOCK_DATA.itemNo||''));
+}
+function downloadCsv(lines,name){
+  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=name+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function stockReset(){
+  STOCK_DATA=null; STOCK_PICK=null; STOCK_ROWS=[]; STOCK_ITEMS=[]; STOCK_OPEN={};
+  $('stockQ').value='';
+  setStockNote('');
+  $('stockStats').innerHTML='';
+  $('stockRowsBadge').textContent='0 行';
+  $('stockUpd').textContent='--';
+  $('stockBadge').textContent='未查询'; $('stockBadge').className='badge';
+  $('stockTable').innerHTML='<div class="empty">输入商品名称（如「牛奶」）后回车，所有命中的商品会一次列出来</div>';
+  $('stockQ').focus();
+}
+$('btnStockQuery').onclick=doStockQuery;
+$('btnStockClear').onclick=stockReset;
+$('btnStockLive').onclick=async()=>{
+  if(STOCK_BUSY) return;
+  let itemNo=(STOCK_PICK&&STOCK_PICK.item_no)||'';
+  let itemName=(STOCK_PICK&&STOCK_PICK.item_name)||'';
+  if(!itemNo){
+    const q=$('stockQ').value.trim();
+    if(!q){ setStockNote('先在表格里点一行选中商品，或直接输入条码/编码','warn'); $('stockQ').focus(); return; }
+    if(!/^[0-9A-Za-z._-]+$/.test(q)){
+      setStockNote('「'+esc(q)+'」是名称，实时接口只认商品编码。请先「搜索库存」，在结果里点一行选中它，再点「实时查询」。','warn');
+      return;
+    }
+    itemNo=q;
+  }
+  STOCK_BUSY=true; $('btnStockLive').disabled=true;
+  try{ await stockLoad(itemNo, itemName, true); }
+  finally{ STOCK_BUSY=false; $('btnStockLive').disabled=false; }
+};
+$('stockZero').onchange=()=>{
+  if(STOCK_DATA&&STOCK_DATA.mode==='search'&&($('stockQ').value||'').trim()) doStockQuery();
+};
+$('stockSort').onchange=e=>{
+  STOCK_SORT=e.target.value;
+  if(STOCK_DATA&&STOCK_DATA.mode==='search') renderStockSearch(STOCK_DATA);
+};
+$('btnStockSync').onclick=async()=>{
+  $('btnStockSync').disabled=true;
+  $('stockHint').textContent='正在向业务系统同步库存（约 30~40 秒）…';
+  try{
+    const before=((await api('/stock/sync')).sync||{}).lastRun||0;
+    await post('/stock/sync',{run:true});
+    for(let i=0;i<45;i++){
+      await new Promise(r=>setTimeout(r,2000));
+      const s=((await api('/stock/sync')).sync)||{};
+      if(s.lastRun>before && !s.running) break;
+    }
+    await stockSyncStatus();
+    if(STOCK_DATA&&STOCK_DATA.mode==='search') await doStockQuery();
+    else if(STOCK_PICK&&STOCK_PICK.item_no) await stockLoad(STOCK_PICK.item_no,STOCK_PICK.item_name,false);
+  }catch(e){
+    setStockNote('同步失败：'+esc(e.message||e),'bad');
+  }finally{
+    $('btnStockSync').disabled=false;
+  }
+};
+$('stockQ').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ e.preventDefault(); doStockQuery(); }
+});
+
+/* ---------------- 门店下拉 + 查询 ---------------- */
+function updateBrBtn(){
+  $('brBtnText').textContent = BR_SEL.id ? (BR_SEL.id+' · '+BR_SEL.name) : '全部门店';
+}
+function updateBrCond(){
+  const label=BR_ACTIVE.id?(BR_ACTIVE.id+' · '+BR_ACTIVE.name):'全部门店';
+  const live=liveOn('shop');
+  $('brCondBadge').textContent='当前：'+label+' · '+dateLabel('shop')+(live?' · 实时':' · 本地');
+  $('brCondBadge').className='badge '+(live?'':'blue');
+}
+function renderBrList(q){
+  q=(q||'').trim();
+  const all=[{id:'',name:'全部门店'}].concat(BRANCHES);
+  const list=all.filter(x=>!q||x.name.includes(q)||String(x.id).includes(q));
+  const shown=list.slice(0,300);
+  let html=shown.length?shown.map(x=>
+    '<div class="combo-item '+(x.id===BR_SEL.id?'sel':'')+'" data-id="'+esc(x.id)+
+      '" data-name="'+esc(x.name)+'">'+(x.id?'<span class="code">'+esc(x.id)+'</span>':'')+
+      esc(x.name)+'</div>').join('')
+    :'<div class="combo-empty">没有匹配的门店</div>';
+  if(list.length>shown.length)
+    html+='<div class="combo-empty">还有 '+fmt(list.length-shown.length)+' 项，输入关键字继续筛选</div>';
+  $('brList').innerHTML=html;
+}
+async function loadBranches(force){
+  const r=await api('/branches'+(force?'?refresh=1':''));
+  if(!r||!r.rows){ $('brHint').textContent='门店加载失败'; return; }
+  BRANCHES=r.rows;
+  const src={system:'业务系统实时拉取',cache:'本机缓存',local:'本地库兜底'}[r.source]||r.source||'';
+  $('brHint').textContent='门店 '+fmt(BRANCHES.length)+' 家 · '+src+(r.message?'（'+r.message+'）':'');
+  $('brSearch').placeholder='输入门店名称或编码搜索（共 '+BRANCHES.length+' 家）';
+  updateBrBtn(); renderBrList($('brSearch').value);
+}
+async function doBrQuery(){
+  if(!applyDateSelection('shop')) return;
+  BR_ACTIVE={id:BR_SEL.id,name:BR_SEL.name};
+  PAGE.shop=0; CHART_COL.shop='';
+  syncDateUI('shop'); hideNote('shop');
+  setLive('shop',$('brLive').checked);
+  await reloadView();
+}
+function resetBr(){
+  BR_SEL={id:'',name:'全部门店'}; BR_ACTIVE={id:'',name:'全部门店'};
+  DATE_SEL.shop={begin:'',end:''}; DATE_ACTIVE.shop={begin:'',end:''};
+  SHOP_LIVE=false; PAGE.shop=0; CHART_COL.shop='';
+  $('brLive').checked=false; $('q-shop').value='';
+  hideNote('shop'); syncDateUI('shop');
+  updateBrBtn(); updateBrCond(); renderBrList($('brSearch').value);
+  reloadView();
+}
+
+/* ---------------- 变更流水 / 快照 ---------------- */
+function kindName(k){ return {add:'新增',change:'数值变化',dim:'维度变化',remove:'消失'}[k]||k; }
+function kindClass(k){ return {add:'add',change:'change',dim:'dim',remove:'remove'}[k]||''; }
+async function loadChanges(){
+  const r=await api('/changes?report='+encodeURIComponent(CHG_REPORT)+'&kind='+encodeURIComponent(CHG_KIND)+'&limit=200');
+  const rows=(r&&r.rows)||[];
+  if(!rows.length){ $('chgBody').innerHTML='<tr><td colspan="6" class="hint">暂无变更记录</td></tr>'; return; }
+  $('chgBody').innerHTML=rows.map(x=>{
+    let delta='<span class="hint">—</span>';
+    if(x.delta!==null&&x.delta!==undefined){
+      const v=Number(x.delta);
+      delta='<span class="delta '+(v>=0?'up':'down')+'">'+(v>=0?'+':'')+esc(fmt(v))+'</span>';
+    }
+    return '<tr><td class="hint">'+esc(ts(x.ts))+'</td>'+
+      '<td>'+esc(REP[x.report]||x.report)+'</td>'+
+      '<td><span class="pill '+kindClass(x.kind)+'">'+esc(kindName(x.kind))+'</span></td>'+
+      '<td>'+esc(x.row_label)+'</td>'+
+      '<td>'+esc(x.detail||(x.old_v+' → '+x.new_v))+'</td>'+
+      '<td class="num">'+delta+'</td></tr>';
+  }).join('');
+}
+async function loadSnapshots(){
+  const r=await api('/snapshots?limit=60');
+  const rows=(r&&r.rows)||[];
+  $('snapBody').innerHTML=rows.length?rows.map(x=>
+    '<tr><td class="hint">'+esc(ts(x.ts))+'</td><td>'+esc(REP[x.report]||x.report)+'</td>'+
+    '<td>'+(x.ok?'<span class="pill add">成功</span>':'<span class="pill remove">跳过</span>')+'</td>'+
+    '<td class="num">'+fmt(x.row_count)+'</td><td class="num">'+fmt(x.added)+'</td>'+
+    '<td class="num">'+fmt(x.changed)+'</td><td class="num">'+fmt(x.removed)+'</td>'+
+    '<td class="num">'+fmt(x.duration_ms)+'ms</td><td class="hint">'+esc(x.message||'')+'</td></tr>').join('')
+    : '<tr><td colspan="9" class="hint">暂无采集记录</td></tr>';
+}
+
+function newGuid(){ const h='0123456789abcdef'; let g=''; for(let i=0;i<32;i++) g+=h[Math.floor(Math.random()*16)]; return g; }
+function freshCaptcha(){
+  GUID=newGuid();
+  const u='/Handlers/VerifyCode.ashx?guid='+GUID+'&t='+Date.now();
+  $('captchaImg').src=IS_IOS_APP?('sxboard://direct?url='+encodeURIComponent(u)):u;
+  $('captchaImg').style.filter='none'; $('loginCode').value='';
+}
+function openLogin(){
+  $('connMask').classList.add('show'); freshCaptcha();
+  try{ setTimeout(()=>$('loginUser').focus(),30); }catch(e){}
+}
+function closeLogin(){ $('connMask').classList.remove('show'); }
+function setLoginMsg(text,kind){
+  const m=$('loginMsg'); m.className='login-msg'+(kind?' '+kind:''); m.textContent=text||'';
+}
+$('captchaImg').onclick=freshCaptcha;
+$('btnEnhance').onclick=()=>{ const im=$('captchaImg');
+  im.style.filter=im.style.filter==='none'?'contrast(2.2) saturate(1.8)':'none';
+  im.style.height='70px'; im.style.width='190px'; };
+$('btnConn').onclick=openLogin;
+$('btnClose').onclick=closeLogin;
+$('connMask').onclick=e=>{ if(e.target===$('connMask')) closeLogin(); };
+$('btnSaveCookie').onclick=async()=>{
+  const v=$('cookieInput').value.trim(); if(!v){ setLoginMsg('请先填入 cookie','bad'); return; }
+  const r=await post('/set-cookie',{cookie:v});
+  setLoginMsg(r.success?'已保存会话：'+r.cookieNames.join(', '):(r.message||'保存失败'),r.success?'ok':'bad');
+  refreshAll();
+};
+$('btnClearCookie').onclick=async()=>{
+  await post('/clear-cookie',{});
+  setLoginMsg('会话已清除，请用你自己的账号重新登录。');
+  refreshAll();
+};
+$('btnLogout').onclick=async()=>{
+  await post('/logout',{});
+  $('loginUser').value=''; $('loginPwd').value=''; $('loginCode').value='';
+  $('btnLogout').classList.add('hidden');
+  $('whoName').textContent='未登录'; $('whoAv').textContent='?';
+  $('operBadge').textContent='未登录'; $('operBadge').className='badge bad';
+  setLoginMsg('已退出登录，请输入你的操作员账号。');
+  freshCaptcha(); refreshAll();
+};
+async function doLogin(){
+  if(LOGIN_BUSY) return;
+  const u=$('loginUser').value.trim(), pw=$('loginPwd').value, code=$('loginCode').value.trim();
+  const force=!!($('loginForce')&&$('loginForce').checked);
+  if(!u||!pw||!code){ setLoginMsg('请填写账号、密码和验证码。','bad'); return; }
+  LOGIN_BUSY=true; $('btnLogin').disabled=true;
+  setLoginMsg(force?'正在强制登录（将挤掉前一个会话）…':'正在登录…');
+  try{
+    const r=await post('/login',{user:u,pwd:pw,code:code,guid:GUID,force:force});
+    if(r.success){
+      const op=r._operator||{};
+      setLoginMsg((r._forced?'已强制登录：':'登录成功：')+(op.operName||u)+'（账号 '+(op.operId||u)+'）'+
+        (r._forced?'，已把这账号在别处的登录踢下线':'')+
+        (r._switched?'，已切换账号':'')+'，后台正在用新会话采集。','ok');
+      $('loginPwd').value=''; $('loginCode').value='';
+      if($('loginForce')) $('loginForce').checked=false;
+      post('/collector/run',{}).catch(()=>{});
+      if(IOS_MODE){ loadCategories(true); loadBranches(true); }
+      setTimeout(closeLogin,900);
+      refreshAll();
+    }else if(r._kicked){
+      // 已按在线表里的真实记录踢出并复查过；这次踢人用掉了这张验证码，只需再补一张
+      if($('loginForce')) $('loginForce').checked=false;
+      setLoginMsg('已把「'+(r._operName||u)+'」在别处的登录踢下线（'+(r._kickMessage||'已踢出')+'）。'+
+        '再输入下面这张验证码点「登录」就能进；以后遇到同样情况会直接用已保存的管理会话踢人，不用重复输码。','ok');
+      freshCaptcha();
+      try{ $('loginCode').focus(); }catch(e){}
+    }else if(r._needForce){
+      // 服务端明确告知「已在别处登录」：自动勾上强制登录，用户只需重输验证码
+      if($('loginForce')) $('loginForce').checked=true;
+      setLoginMsg('该账号已在别处登录（'+(r._operName||u)+'）。已自动勾选「强制登录」，'+
+        '输入下面这张验证码点「登录」，系统会先把它踢下线再登进去。','warn');
+      freshCaptcha();
+      try{ $('loginCode').focus(); }catch(e){}
+    }else{
+      const why = r.message==='KICKFAIL'
+        ? ('踢出失败：'+(r._kickMessage||'业务系统拒绝')+'。请确认账号是否有「操作员在线」管理权限，或换一个账号。')
+        : ('登录失败：'+(ERR[r.message]||r.message||'未知错误')+'。现有会话未被改动，可修改后重试。');
+      setLoginMsg(why,'bad');
+      freshCaptcha();
+    }
+  }catch(e){ setLoginMsg('登录请求失败：'+(e.message||e),'bad'); freshCaptcha(); }
+  LOGIN_BUSY=false; $('btnLogin').disabled=false;
+}
+$('btnLogin').onclick=doLogin;
+['loginUser','loginPwd','loginCode'].forEach(id=>{
+  $(id).onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); doLogin(); } };
+});
+
+/* ---------------- 事件 ---------------- */
+function showTab(cur){
+  if(!document.getElementById('panel-'+cur)) cur='item';
+  CUR=cur;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.r===cur));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+cur));
+  if(cur==='stock'){ stockSyncStatus(); if(!STOCK_DATA) stockReset(); }
+  else{ reloadView(); }
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.r));
+document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+  const r=b.dataset.r,a=b.dataset.act;
+  if(a==='stockcsv'){ stockCsv(); return; }
+  if(a==='prev'){ PAGE[r]=Math.max(0,PAGE[r]-1); reloadView(); }
+  if(a==='next'){ PAGE[r]=PAGE[r]+1; reloadView(); }
+  if(a==='refresh') reloadView();
+  if(a==='csv'){
+    const cls=(r==='item'&&CLS_ACTIVE.id)?'&cls='+encodeURIComponent(CLS_ACTIVE.id):'';
+    const br=(r==='shop'&&BR_ACTIVE.id)?'&branch='+encodeURIComponent(BR_ACTIVE.id):'';
+    const q='&q='+encodeURIComponent(($('q-'+r).value||'').trim());
+    let u=APP+'/export.csv?report='+r+cls+br+q;
+    if(datePicked(r)){
+      const g=activeRange(r);
+      u+='&range=1&begin='+g.begin+'&end='+g.end;
+    }
+    window.location.href=u;
+  }
+});
+
+/* 类别下拉交互 */
+$('clsBtn').onclick=e=>{
+  e.stopPropagation();
+  const p=$('clsPanel'), willOpen=p.classList.contains('hidden');
+  p.classList.toggle('hidden',!willOpen);
+  if(willOpen){ $('clsSearch').value=''; renderClsList(''); $('clsSearch').focus(); }
+};
+document.addEventListener('click',e=>{
+  if(!$('clsCombo').contains(e.target)) $('clsPanel').classList.add('hidden');
+  if(!$('brCombo').contains(e.target)) $('brPanel').classList.add('hidden');
+});
+$('clsSearch').oninput=e=>renderClsList(e.target.value);
+$('clsSearch').onkeydown=e=>{
+  if(e.key==='Enter'){
+    const first=$('clsList').querySelector('.combo-item');
+    if(first){ first.click(); e.preventDefault(); }
+  }
+};
+$('clsList').onclick=e=>{
+  const it=e.target.closest('.combo-item'); if(!it) return;
+  CLS_SEL={id:it.dataset.id,name:it.dataset.name};
+  updateClsBtn(); renderClsList($('clsSearch').value);
+  $('clsPanel').classList.add('hidden');
+};
+$('btnClsQuery').onclick=doClsQuery;
+$('btnClsReset').onclick=resetCls;
+$('btnClsReload').onclick=async()=>{
+  $('clsHint').textContent='正在重新拉取类别…';
+  await loadCategories(true);
+};
+
+/* 门店下拉交互 */
+$('brBtn').onclick=e=>{
+  e.stopPropagation();
+  const p=$('brPanel'), willOpen=p.classList.contains('hidden');
+  p.classList.toggle('hidden',!willOpen);
+  if(willOpen){ $('brSearch').value=''; renderBrList(''); $('brSearch').focus(); }
+};
+$('brSearch').oninput=e=>renderBrList(e.target.value);
+$('brSearch').onkeydown=e=>{
+  if(e.key==='Enter'){
+    const first=$('brList').querySelector('.combo-item');
+    if(first){ first.click(); e.preventDefault(); }
+  }
+};
+$('brList').onclick=e=>{
+  const it=e.target.closest('.combo-item'); if(!it) return;
+  BR_SEL={id:it.dataset.id,name:it.dataset.name};
+  updateBrBtn(); renderBrList($('brSearch').value);
+  $('brPanel').classList.add('hidden');
+};
+$('btnBrQuery').onclick=doBrQuery;
+$('btnBrReset').onclick=resetBr;
+$('btnBrReload').onclick=async()=>{
+  $('brHint').textContent='正在重新拉取门店…';
+  await loadBranches(true);
+};
+['item','shop'].forEach(r=>{
+  let t=null;
+  $('q-'+r).oninput=()=>{ clearTimeout(t); t=setTimeout(()=>{ PAGE[r]=0; reloadView(); },280); };
+  // 起止日期自动纠正，避免用户选反
+  $('begin-'+r).onchange=()=>{
+    const e=$('end-'+r);
+    if(e.value&&e.value<$('begin-'+r).value) e.value=$('begin-'+r).value;
+  };
+  $('end-'+r).onchange=()=>{
+    const b=$('begin-'+r);
+    if(b.value&&b.value>$('end-'+r).value) b.value=$('end-'+r).value;
+  };
+});
+$('btnInterval').onclick=async()=>{
+  const v=parseInt($('intervalInput').value,10);
+  const r=await post('/collector/config',{interval:isNaN(v)?60:v});
+  $('lastResult').textContent=r.success?'采集间隔已保存为 '+(r.cfg.interval)+' 秒':'保存失败';
+  refreshAll();
+};
+$('btnToggle').onclick=async()=>{
+  const on=!(OVERVIEW&&OVERVIEW.collector&&OVERVIEW.collector.enabled);
+  await post('/collector/config',{enabled:on}); refreshAll();
+};
+$('btnRunNow').onclick=async()=>{
+  $('lastResult').textContent='正在采集…';
+  $('btnRunNow').disabled=true;
+  const r=await post('/collector/run',{});
+  $('btnRunNow').disabled=false;
+  if(r&&r.results){
+    const parts=Object.keys(REP).map(k=>{ const x=r.results[k];
+      return x?(REP[k]+'：'+(x.ok?('新增 '+fmt(x.added)+' / 变更 '+fmt(x.changed)):(x.message||'失败'))):null; }).filter(Boolean);
+    $('lastResult').textContent=parts.join('　·　')||'已触发';
+  }
+  LAST_SNAP=0; refreshAll();
+};
+$('chgSeg').onclick=e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  CHG_KIND=b.dataset.k||'';
+  $('chgSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  loadChanges();
+};
+$('chgReport').onchange=e=>{ CHG_REPORT=e.target.value; loadChanges(); };
+$('btnChgRefresh').onclick=loadChanges;
+$('btnSnap').onclick=()=>{ SNAP_OPEN=!SNAP_OPEN; $('snapBox').classList.toggle('hidden',!SNAP_OPEN); if(SNAP_OPEN) loadSnapshots(); };
+$('btnClearData').onclick=async()=>{
+  if(!confirm('确定清空本机 data.db 里的全部报表数据、变更流水和采集历史吗？')) return;
+  await post('/data/clear',{});
+  $('clearMsg').textContent='本地数据已清空，后台正在重新采全量…';
+  LAST_SNAP=0; refreshAll();
+};
+
+/* ---------------- 轮询 ---------------- */
+async function refreshAll(){
+  try{ const o=await api('/overview'); renderOverview(o); }catch(e){}
+}
+async function tick(){
+  await refreshAll();
+  loadChanges();
+  if(SNAP_OPEN) loadSnapshots();
+}
+(async function boot(){
+  freshCaptcha();
+  let s=null;
+  try{ s=await api('/status',{cache:'no-store'}); }catch(e){}
+  if(!s){
+    if(IS_IOS_APP){ return; }   // App 里桥还没就绪时静默重试由原生层负责
+    $('sessionBadge').className='badge bad';
+    $('sessionBadge').innerHTML='<span class="dot"></span>本地服务未连接';
+    $('nextBadge').textContent='服务未启动';
+    $('sourceWarn').classList.remove('hidden');
+    $('sourceWarn').innerHTML='<span class="note bad">本页必须通过本地服务打开，直接双击 index.html 或静态预览是打不开的。<br>'+
+      '正确地址：<a href="http://127.0.0.1:8080/__app__/" target="_blank"><b>http://127.0.0.1:8080/__app__/</b></a><br>'+
+      '服务没启动请双击 sixun-report 目录下的 <b>start.bat</b>；若 8080 被占用，以启动窗口打印的地址为准。</span>';
+    return;
+  }
+  if(s.mode==='ios'){
+    IOS_MODE=true;
+    if(window.__iosApplyMode) window.__iosApplyMode(s);
+  }
+  await refreshAll();
+  await loadCategories(false);
+  await loadBranches(false);
+  syncDateUI('item'); syncDateUI('shop');
+  updateClsCond(); updateBrCond();
+  if(IOS_MODE){ await reloadView(); } else { await loadData(); }
+  await loadChanges();
+  POLL=setInterval(tick,5000);
+  /* 支持 ?tab=stock&q=牛奶 这类直达链接 */
+  try{
+    const qs=new URLSearchParams(location.search);
+    const want=qs.get('tab')||'';
+    if(want) showTab(want);
+    const q0=(qs.get('q')||'').trim();
+    if(q0&&CUR==='stock'){ $('stockQ').value=q0; doStockQuery(); }
+  }catch(e){}
+})();
+</script>
+
+<script>
+/* ======================================================================
+   iOS 直连引擎：App（sxboard:// 壳）里由这段代码接管全部业务逻辑。
+   思迅系统是公网地址，App 不经过电脑：原生层只做「带 Cookie 的 HTTP 转发」，
+   登录/踢人/报表/库存的完整逻辑都在这里（与 PC 端 proxy.py 逐条对应）。
+   电脑浏览器访问本地服务时 IS_IOS_APP=false，这段代码整体不生效。
+   ====================================================================== */
+(function(){
+'use strict';
+if(!IS_IOS_APP) return;
+
+const SX={ target: localStorage.getItem('sx_target')||'http://1.12.232.80:8032' };
+
+/* ---------- 字段映射与噪声列（与 store.py 一致） ---------- */
+const LABELS={
+  item_no:'商品编码',item_name:'商品名称',item_subname:'商品简称',
+  item_size:'商品规格',purchase_spec:'进货规格',unit_no:'单位',
+  sale_qty:'销售数量',sale_amt:'销售金额',sale_amt_notax:'未税销售金额',
+  ret_qty:'退货数量',ret_amt:'退货金额',giv_qty:'赠送数量',giv_amt:'赠送金额',
+  qty_sum:'净销售数量',amt_sum:'净销售金额',avg_price:'平均售价',
+  ref_amt:'参考金额',price:'进价',in_price:'进货单价',in_amt:'进货金额',
+  purchase_tax:'进项税率',sale_tax:'销项税率',stock_qty:'库存数量',
+  item_subno:'商品助记码',item_clsno:'类别编码',item_clsname:'类别名称',
+  item_brand:'品牌编码',brand_name:'品牌名称',main_supcust:'主供应商编码',
+  main_supcustname:'主供应商名称',other1:'自定义项1',item_supcust:'供应商货号',
+  gross_profit:'毛利额',gross_profit_rate:'毛利率',
+  dept_clsno:'部门编码',dept_clsname:'部门名称',
+  branch_no:'门店编码',branch_name:'门店名称',oper_date:'营业日期',
+  qty_rat:'数量占比',amt_rat:'金额占比',
+  branch_sale_amt:'门店销售金额',cls_amt_rate:'类别金额占比',
+  sale_price:'售价',source_price:'来源价',pref_amt:'优惠金额'
+};
+const META_COLS=new Set(['rn','level','ElapsedSeconds','IsFooter','isFooter','GroupIndex',
+  'IsSubtotalRow','isSubtotalRow','group_title','Breadcrumbs','sheetType','isFooterRow','RowIndex']);
+const META_RE=/^(?:pro_code\d*|item_spec_\w+|display\w*|hidden\w*)$/i;
+const DIM_WORDS=/编码|编号|条码|货号|名称|门店|店名|店号|部门|类别|分类|品牌|规格|单位|日期|时间|月份|操作员|营业员|供应商|课别|组别|区域|状态|类型|单号|code|name|date|shop|store|dept|type|id$/i;
+const METRIC_WORDS=/数量|金额|额|价|税|率|占比|库存|毛利|成本|次数|天数|qty|amt|price|rat|tax|profit|cost|count|sum|total|stock/i;
+const IGNORE_WORDS=/^(序号|行号|no\.?|#|index|rownum)$/i;
+
+/* ---------- 通用工具 ---------- */
+function cleanS(v){ if(v==null) return ''; if(typeof v==='object') return JSON.stringify(v); return String(v).trim(); }
+function toNum(v){
+  if(v==null||typeof v==='boolean') return null;
+  if(typeof v==='number') return isFinite(v)?v:null;
+  let s=String(v).trim(); if(!s) return null;
+  s=s.replace(/[,，¥￥%％ \u00a0\t]/g,'');
+  const neg=/^\(.*\)$/.test(s); if(neg) s=s.slice(1,-1);
+  if(['','-','--','—','null','None'].indexOf(s)>=0) return null;
+  if(!/^-?\d+(\.\d+)?$/.test(s)) return null;
+  const x=Number(s); return isNaN(x)?null:(neg?-x:x);
+}
+function sxB64(s){ try{ return btoa(unescape(encodeURIComponent(s))); }catch(e){ return btoa(s); } }
+function sxForm(o){ return Object.keys(o||{}).map(function(k){ return k+'='+encodeURIComponent(o[k]==null?'':o[k]); }).join('&'); }
+function parseQs(path){
+  const i=path.indexOf('?'),o={};
+  if(i<0) return o;
+  path.slice(i+1).split('&').forEach(function(kv){
+    if(!kv) return;
+    const j=kv.indexOf('=');
+    const k=decodeURIComponent(j<0?kv:kv.slice(0,j));
+    const v=j<0?'':decodeURIComponent(kv.slice(j+1));
+    o[k]=v;
+  });
+  return o;
+}
+function roundN(v,n){ const m=Math.pow(10,n); return Math.round(v*m)/m; }
+/* JSON 数字字面量保真：思迅返回 259.0 / 4e-05 这类数字，
+   Python str() 会保留原样且 to_num 拒绝科学计数法；
+   JS Number 会把它们变成 259 / 0.00004，导致合计、计数与 PC 不一致。
+   所以解析前先把数字字面量原样转成字符串。 */
+/* Python str(float) 的移植：整数部分补 .0；绝对值 <1e-4 或 >=1e16 用 e±NN 指数格式。
+   这样 "259.0000"→"259.0"、"0.00004"→"4e-05"，与 PC 端逐字节一致，
+   也让 toNum 对科学计数法的拒绝行为保持相同。 */
+function pyNumStr(lit){
+  if(!/[.eE]/.test(lit)) return lit;                 // 整数字面量原样
+  const v=Number(lit);
+  if(!isFinite(v)) return lit;
+  if(v===0) return /-/.test(lit)?'-0.0':'0.0';
+  if(Number.isInteger(v)&&Math.abs(v)<1e16) return v+'.0';
+  const a=Math.abs(v);
+  if(a<1e-4||a>=1e16){
+    const s=v.toExponential();
+    const m=s.match(/^(-?\d)(?:\.(\d+))?e([+-]?\d+)$/);
+    if(m){
+      const mant=m[1]+(m[2]?'.'+m[2]:'');
+      const e=parseInt(m[3],10);
+      const sign=e<0?'-':'+';
+      let d=String(Math.abs(e)); if(d.length<2) d='0'+d;
+      return mant+'e'+sign+d;
+    }
+    return s;
+  }
+  return String(v);
+}
+function sxNumberToString(text){
+  text=String(text==null?'':text);
+  let out='',i=0,inStr=false;
+  const isNumCh=function(c){ return (c>='0'&&c<='9')||c==='-'||c==='+'||c==='.'||c==='e'||c==='E'; };
+  while(i<text.length){
+    const c=text[i];
+    if(inStr){
+      out+=c;
+      if(c==='\\'){ out+=text[i+1]||''; i+=2; continue; }
+      if(c==='"') inStr=false;
+      i++; continue;
+    }
+    if(c==='"'){ inStr=true; out+=c; i++; continue; }
+    if((c>='0'&&c<='9')||c==='-'){
+      let j=i-1;
+      while(j>=0&&(text[j]===' '||text[j]==='\t'||text[j]==='\n'||text[j]==='\r')) j--;
+      const prev=j>=0?text[j]:'';
+      if(prev===':'||prev===','||prev==='['){
+        let k=i;
+        while(k<text.length&&isNumCh(text[k])) k++;
+        const lit=text.slice(i,k);
+        if(/^-$/.test(lit)){ out+=c; i++; continue; }
+        out+='"'+pyNumStr(lit)+'"';
+        i=k; continue;
+      }
+    }
+    out+=c; i++;
+  }
+  return out;
+}
+function sxParse(text){
+  try{ return JSON.parse(sxNumberToString(String(text==null?'':text))); }
+  catch(e){ return undefined; }
+}
+function lsJson(k,d){ try{ const v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v; }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+/* ---------- Cookie 罐：全在 localStorage，原生转发层无状态 ---------- */
+function jarGet(name){ return lsJson(name,[]); }
+function jarSet(name,list){ lsSet(name,list||[]); }
+function jarMap(list){ const o={}; (list||[]).forEach(function(c){ o[c.name]=c.value; }); return o; }
+function jarFromMap(o){ return Object.keys(o).map(function(k){ return {name:k,value:o[k]}; }); }
+function mergeSet(list,set){ const m=jarMap(list); (set||[]).forEach(function(c){ m[c.name]=c.value; }); return jarFromMap(m); }
+function cookieHeader(list){ return (list||[]).map(function(c){ return c.name+'='+c.value; }).join('; '); }
+function minusCtx(list){ return (list||[]).filter(function(c){ return c.name!=='sq10_user_ctx'; }); }
+function mainJar(){ return jarGet('sx_jar'); }
+function sessionIdentityOf(list){
+  const raw=(jarMap(list||[])).sq10_user_ctx||'';
+  try{
+    const obj=JSON.parse(decodeURIComponent(raw));
+    if(obj&&typeof obj==='object'&&!Array.isArray(obj))
+      return {operId:String(obj.OperId||''),operName:String(obj.OperName||''),
+        branchName:String(obj.LoginBranchName||''),stockName:String(obj.StockName||'')};
+  }catch(e){}
+  return {operId:'',operName:'',branchName:'',stockName:''};
+}
+
+/* ---------- 原生转发（sxboard://fetch?p=/@raw） ---------- */
+async function sxRaw(method,url,body,headers,cookies){
+  const payload={method:method,url:url,body:body||'',headers:headers||{},cookie:cookieHeader(cookies||[])};
+  const r=await api('/@raw',{method:'POST',body:JSON.stringify(payload)});
+  if(!r||r.error) return {status:502,text:'',setCookies:[],error:(r&&r.message)||'桥请求失败'};
+  if(typeof r.text!=='string') r.text='';
+  if(!Array.isArray(r.setCookies)) r.setCookies=[];
+  return r;
+}
+
+/* ---------- 响应规范化（store.normalize_response 的 JSON 分支） ---------- */
+function findBestTable(node,path,depth,best){
+  if(depth>8) return best;
+  if(node&&typeof node==='object'&&!Array.isArray(node)){
+    for(const k in node){
+      if(!Object.prototype.hasOwnProperty.call(node,k)) continue;
+      const v=node[k],p=path+'/'+k;
+      if(Array.isArray(v)&&v.length){
+        const first=v[0];
+        if(first&&typeof first==='object'&&!Array.isArray(first)){
+          const score=v.length*Object.keys(first).length+
+            (/^(rows|data|list|records|items|table|result|dt)$/i.test(k)?30:0);
+          if(!best||score>best.score) best={score:score,rows:v,path:p};
+        }else if(Array.isArray(first)&&v.length>1){
+          const score=v.length*(first.length||1);
+          if(!best||score>best.score) best={score:score,path:p,
+            rows:v.map(function(row){ const o={}; (row||[]).forEach(function(x,i){ o['col'+(i+1)]=cleanS(x); }); return o; })};
+        }
+      }
+      best=findBestTable(v,p,depth+1,best);
+    }
+  }else if(Array.isArray(node)){
+    node.slice(0,50).forEach(function(v,i){ best=findBestTable(v,path+'/'+i,depth+1,best); });
+  }
+  return best;
+}
+function normalizeResponse(obj){
+  const tbl=findBestTable(obj,'',0,null);
+  if(!tbl||!tbl.rows||!tbl.rows.length)
+    return {headers:[],rows:[],note:'JSON 中没有找到数据行（可能未登录 / 未查询 / 返回的是错误信息）'};
+  const rawRows=tbl.rows.filter(function(d){
+    if(!d||typeof d!=='object'||Array.isArray(d)) return false;
+    const f=d.IsFooter==null?'':String(d.IsFooter);
+    return !(f.toLowerCase()==='true'||f==='1');
+  });
+  if(!rawRows.length) return {headers:[],rows:[],note:'数据行为空'};
+  const keys=[];
+  rawRows.forEach(function(d){
+    for(const k in d){
+      if(!Object.prototype.hasOwnProperty.call(d,k)) continue;
+      const kk=cleanS(k)||'列';
+      if(keys.indexOf(kk)<0) keys.push(kk);
+    }
+  });
+  const useful=keys.filter(function(k){
+    if(META_COLS.has(k)||META_RE.test(k)) return false;
+    return rawRows.some(function(d){ return cleanS(d[k])!==''; });
+  });
+  if(!useful.length) return {headers:[],rows:[],note:'所有列都为空'};
+  const seen={},headers=[],map=[];
+  useful.forEach(function(k){
+    const base=LABELS[k]||k;
+    let h=base,n=2;
+    while(seen[h]){ h=base+'('+n+')'; n++; }
+    seen[h]=1; headers.push(h); map.push([k,h]);
+  });
+  const rows=[];
+  rawRows.forEach(function(d){
+    const nd={}; let any=false;
+    map.forEach(function(pr){ const v=cleanS(d[pr[0]]); nd[pr[1]]=v; if(v!=='') any=true; });
+    if(any) rows.push(nd);
+  });
+  if(!rows.length) return {headers:[],rows:[],note:'数据行为空'};
+  return {headers:headers,rows:rows,note:'JSON: '+tbl.path};
+}
+
+/* ---------- 列分类 / 汇总 / 排行（store.py 同名函数的移植） ---------- */
+function splitColumns(headers,rows){
+  const sample=(rows&&rows.length?rows.slice(0,200):[{}]);
+  const dim=[],met=[];
+  headers.forEach(function(h){
+    const vals=sample.map(function(r){ return cleanS(r&&r[h]); });
+    const ne=vals.filter(function(v){ return v!==''; });
+    let ratio=1;
+    if(ne.length) ratio=ne.filter(function(v){ return toNum(v)!==null; }).length/ne.length;
+    const isMet=(METRIC_WORDS.test(h)&&ratio>=0.6)||(ratio>=0.95&&!DIM_WORDS.test(h));
+    if(isMet&&ne.length) met.push(h); else dim.push(h);
+  });
+  if(!dim.length&&headers.length) dim.push(headers[0]);
+  if(!met.length) headers.forEach(function(h){ if(dim.indexOf(h)<0) met.push(h); });
+  let key=dim.filter(function(h){ return !IGNORE_WORDS.test(h); });
+  if(!key.length) key=dim;
+  return {dim:dim,met:met,key:key};
+}
+function summarize(rows,metCols){
+  const out={};
+  (metCols||[]).forEach(function(h){
+    const vals=rows.map(function(r){ return toNum(r&&r[h]); }).filter(function(v){ return v!==null; });
+    if(vals.length){
+      const sum=vals.reduce(function(a,b){ return a+b; },0);
+      out[h]={sum:roundN(sum,4),avg:roundN(sum/vals.length,4),count:vals.length};
+    }
+  });
+  return out;
+}
+function topByCol(rows,headers,dimCols,metCols,report,n){
+  n=n||10;
+  if(!rows||!rows.length||!metCols||!metCols.length) return {};
+  const dims=(dimCols||[]).filter(function(h){ return headers.indexOf(h)>=0; });
+  const prefer=report==='item'?/商品名称|品名|名称/:/门店名称|名称|品名/;
+  let nameCol='';
+  for(let i=0;i<dims.length;i++){ if(prefer.test(dims[i])){ nameCol=dims[i]; break; } }
+  if(!nameCol){ for(let i=0;i<dims.length;i++){ if(dims[i].indexOf('名称')>=0||dims[i].indexOf('品名')>=0){ nameCol=dims[i]; break; } } }
+  if(!nameCol) nameCol=dims.length?dims[0]:(headers[0]||'');
+  let codeCol='';
+  for(let i=0;i<dims.length;i++){ if(/编码|条码|编号|code|no$/i.test(dims[i])){ codeCol=dims[i]; break; } }
+  const out={};
+  (metCols||[]).forEach(function(col){
+    if(headers.indexOf(col)<0) return;
+    const vals=[];
+    rows.forEach(function(r){ const v=toNum(r&&r[col]); if(v!==null) vals.push({v:v,r:r}); });
+    if(!vals.length) return;
+    vals.sort(function(a,b){ return b.v-a.v; });
+    const items=[];
+    vals.slice(0,n).forEach(function(x){
+      items.push({label:cleanS(x.r[nameCol])||'-',code:codeCol?cleanS(x.r[codeCol]):'',value:roundN(x.v,4)});
+    });
+    out[col]=items;
+  });
+  return out;
+}
+function clsOk(payload,cls){
+  if(!cls) return true;
+  const code=cleanS(payload&&payload['类别编码'])||cleanS(payload&&payload['item_clsno']);
+  const name=cleanS(payload&&payload['类别名称'])||cleanS(payload&&payload['item_clsname']);
+  return (code&&code.indexOf(cls)===0)|| (!!name&&name===cls);
+}
+function branchOk(payload,branch){
+  if(!branch) return true;
+  const wanted={};
+  String(branch).replace(/，/g,',').split(',').forEach(function(x){ const t=x.trim(); if(t) wanted[t]=1; });
+  if(!Object.keys(wanted).length) return true;
+  const code=cleanS(payload&&payload['门店编码'])||cleanS(payload&&payload['item_branch_no'])||cleanS(payload&&payload['branch_no']);
+  const name=cleanS(payload&&payload['门店名称'])||cleanS(payload&&payload['branch_name']);
+  return !!((code&&wanted[code])||(name&&wanted[name]));
+}
+function buildView(headers,rows,limit,offset,cls,branch,report){
+  const info=splitColumns(headers,(rows||[]).slice(0,200));
+  const dim=info.dim,met=info.met;
+  let rs=rows||[];
+  if(cls||branch) rs=rs.filter(function(r){ return clsOk(r,cls)&&branchOk(r,branch); });
+  const now=Date.now()/1000;
+  const dset={},mset={};
+  dim.forEach(function(h){ dset[h]=1; }); met.forEach(function(h){ mset[h]=1; });
+  const allrows=rs.map(function(r){
+    const dims={},metrics={};
+    headers.forEach(function(h){ if(dset[h]) dims[h]=cleanS(r[h]); if(mset[h]) metrics[h]=cleanS(r[h]); });
+    return {key:'',payload:r,dims:dims,metrics:metrics,firstSeen:now,lastSeen:now,updatedAt:now,rev:1,active:1};
+  });
+  const total=allrows.length;
+  return {headers:headers,dimCols:dim,metCols:met,
+    rows:allrows.slice(offset,offset+limit),total:total,
+    limit:limit,offset:offset,cls:cls||'',branch:branch||'',
+    summary:summarize(rs,met),topByCol:topByCol(rs,headers,dim,met,report),live:true};
+}
+
+/* ---------- 两张报表：实时查询 ---------- */
+const SX_SRC={
+  item:{path:'/api/RptItemSaleSummary/Query',grid:'RptItemSaleSummaryGrid',menu:'5402'},
+  shop:{path:'/api/RptStoreSaleSummary/Query',grid:'RptStoreSaleSummaryGrid',menu:'5405'}
+};
+const liveCache={};
+function reportDateParams(begin,end,report,cls,branch){
+  const t=todayStr();
+  begin=(begin||'').trim()||t;
+  end=(end||'').trim()||begin;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(begin)||!/^\d{4}-\d{2}-\d{2}$/.test(end))
+    throw new Error('日期格式须为 YYYY-MM-DD');
+  if(begin>end) throw new Error('开始日期不能晚于结束日期');
+  const p={beginDate:begin+' 00:00:00',endDate:end+' 23:59:59',rows:'50000',page:'1'};
+  if(report==='item'&&cls) p.item_clsno=cls;
+  if(report==='shop'&&branch) p.branch_no=branch;
+  return p;
+}
+async function fetchReportRows(report,extra,q){
+  const src=SX_SRC[report];
+  if(!src) throw new Error('未知报表');
+  const params=Object.assign({loadAll:'false',page:'1',rows:'50000',
+    gridFlag:src.grid,menuId:src.menu},extra);
+  const body=sxForm(params);
+  const ck=report+'|'+body+'|'+(q||'');
+  const hit=liveCache[ck];
+  if(hit&&(Date.now()/1000-hit.t)<20) return {headers:hit.h,rows:hit.r,note:hit.n,cached:true};
+  const res=await sxRaw('POST',src.path,body,
+    {'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+     'X-Requested-With':'XMLHttpRequest'},mainJar());
+  if(res.error) throw new Error(res.error);
+  if(res.status>=400) throw new Error('业务系统返回 HTTP '+res.status);
+  let obj=sxParse(res.text);
+  if(obj===undefined){ throw new Error('响应不是 JSON'); }
+  if(obj&&obj.isLoseLogin) throw new Error('会话已失效，请重新登录');
+  const n=normalizeResponse(obj||{});
+  let rows=n.rows;
+  if(q){
+    const ql=q.toLowerCase();
+    rows=rows.filter(function(r){ return JSON.stringify(r).toLowerCase().indexOf(ql)>=0; });
+  }
+  if(Object.keys(liveCache).length>30) Object.keys(liveCache).forEach(function(k){ delete liveCache[k]; });
+  liveCache[ck]={t:Date.now()/1000,h:n.headers,r:rows,n:n.note};
+  return {headers:n.headers,rows:rows,note:n.note,cached:false};
+}
+async function queryReport(report,extra,vw,limit,offset,q){
+  const t0=Date.now();
+  let f;
+  try{ f=await fetchReportRows(report,extra,q); }
+  catch(e){ return {error:String(e.message||e)}; }
+  const view=buildView(f.headers,f.rows,limit,offset,vw.cls||'',vw.branch||'',report);
+  view.note=f.note;
+  view.durationMs=Date.now()-t0;
+  view.message=(!f.rows.length&&f.note)?f.note:'';
+  view.cached=f.cached;
+  lsSet('sx_view_'+report,{ts:Date.now()/1000,headers:view.headers,dimCols:view.dimCols,
+    metCols:view.metCols,summary:view.summary,total:view.total});
+  return view;
+}
+
+/* ---------- 类别 / 门店（带 localStorage 缓存，6 小时） ---------- */
+async function fetchCats(force){
+  const c=lsJson('sx_cats',null);
+  if(!force&&c&&c.rows&&c.rows.length&&(Date.now()/1000-(c.ts||0))<6*3600)
+    return {rows:c.rows,total:c.rows.length,source:'cache',message:''};
+  const res=await sxRaw('POST','/api/Common/QueryItemCls','page=1&rows=10000',
+    {'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+     'X-Requested-With':'XMLHttpRequest'},mainJar());
+  if(res.error) return {rows:[],total:0,source:'',message:res.error};
+  if(res.status>=400) return {rows:[],total:0,source:'',message:'业务系统 HTTP '+res.status};
+  const obj=sxParse(res.text)||{};
+  const fresh=[];
+  ((obj&&obj.rows)||[]).forEach(function(r){
+    const cid=cleanS(r&&r.id),name=cleanS(r&&r.name);
+    if(!cid&&!name) return;
+    fresh.push({id:cid,name:name||cid,level:Math.max(1,Math.floor(cid.length/2))});
+  });
+  fresh.sort(function(a,b){ const x=a.id||a.name,y=b.id||b.name; return x<y?-1:(x>y?1:0); });
+  if(fresh.length){
+    lsSet('sx_cats',{ts:Date.now()/1000,rows:fresh});
+    return {rows:fresh,total:fresh.length,source:'system',message:''};
+  }
+  if(c&&c.rows&&c.rows.length) return {rows:c.rows,total:c.rows.length,source:'cache',message:'已使用上次缓存的类别'};
+  return {rows:[],total:0,source:'',message:cleanS(obj.message)||('业务系统 HTTP '+res.status)};
+}
+async function fetchBrs(force){
+  const c=lsJson('sx_branches',null);
+  if(!force&&c&&c.rows&&c.rows.length&&(Date.now()/1000-(c.ts||0))<6*3600)
+    return {rows:c.rows,total:c.rows.length,source:'cache',message:''};
+  const body=sxForm({page:'1',rows:'10000',dataType:'branch',tradeType:'',query:'',
+    clsNo:'',status:'',isHQ:'true',isShowAll:'true',displayAll:'true',singleSelect:'false'});
+  const res=await sxRaw('POST','/api/Common/QueryBranches',body,
+    {'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+     'X-Requested-With':'XMLHttpRequest'},mainJar());
+  if(res.error) return {rows:[],total:0,source:'',message:res.error};
+  if(res.status>=400) return {rows:[],total:0,source:'',message:'业务系统 HTTP '+res.status};
+  const obj=sxParse(res.text)||{};
+  const fresh=[];
+  ((obj&&obj.rows)||[]).forEach(function(r){
+    const bid=cleanS(r&&r.id),name=cleanS(r&&r.name);
+    if(!bid||bid.toUpperCase()==='ALL') return;
+    fresh.push({id:bid,name:name||bid,level:1});
+  });
+  fresh.sort(function(a,b){ return a.id<b.id?-1:(a.id>b.id?1:0); });
+  if(fresh.length){
+    lsSet('sx_branches',{ts:Date.now()/1000,rows:fresh});
+    return {rows:fresh,total:fresh.length,source:'system',message:''};
+  }
+  if(c&&c.rows&&c.rows.length) return {rows:c.rows,total:c.rows.length,source:'cache',message:'已使用上次缓存的门店'};
+  return {rows:[],total:0,source:'',message:cleanS(obj.message)||('业务系统 HTTP '+res.status)};
+}
+
+/* ---------- 实时库存 ---------- */
+async function fetchStock(itemNo,branchNo,asZero,rows){
+  const form={page:'1',rows:String(rows||2000),loadAll:'false',
+    gridFlag:'RptImStockReal1Grid',menuId:'8303',rpt_flag:'1',
+    branch_no:branchNo||'%',item_no:itemNo||'%',item_subno:'%',
+    as_zero:String(asZero==null?'0':asZero)};
+  const res=await sxRaw('POST','/api/RptImStockReal1/Query',sxForm(form),
+    {'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+     'X-Requested-With':'XMLHttpRequest',
+     'Referer':SX.target+'/WebPages/Stm/RptImStockReal1.aspx'},mainJar());
+  if(res.error) throw new Error(res.error);
+  if(res.status>=400) throw new Error('业务系统返回 HTTP '+res.status);
+  let obj=sxParse(res.text);
+  if(obj===undefined){ throw new Error('库存接口返回无法解析'); }
+  if(obj&&obj.isLoseLogin) throw new Error('会话已失效，请重新登录后再查');
+  if(obj&&!obj.success&&obj.message)
+    throw new Error(String(obj.message).replace(/[\r\n]+/g,' ').slice(0,200));
+  return (obj&&obj.rows)||[];
+}
+function stockRow(r){
+  return {branchNo:cleanS(r.v_branch_no),branchName:cleanS(r.v_branch_name),
+    itemNo:cleanS(r.v_item_no),itemName:cleanS(r.v_item_name),
+    clsName:cleanS(r.item_clsname),unit:cleanS(r.unit_no),
+    qty:toNum(r.v_stock_total)||0,amt:toNum(r.v_stock_amt)||0,
+    cost:toNum(r.v_avg_cost),price:toNum(r.sale_price),
+    place:cleanS(r.place_name),status:cleanS(r.statusName),
+    sale7:toNum(r.last_7days_qty),sale30:toNum(r.last_30days_qty),
+    spec:cleanS(r.item_size)};
+}
+async function stockQuery(itemNo,includeZero){
+  const t0=Date.now();
+  itemNo=(itemNo||'').trim();
+  if(!itemNo) return {error:'请先输入或选择商品'};
+  const got={};
+  const run=async function(key,az){
+    try{ got[key]=await fetchStock(itemNo,'%',az,2000); }
+    catch(e){ got[key]=e; }
+  };
+  if(includeZero){ await run('has','1'); await run('zero','0'); }
+  else{
+    await run('has','1');
+    if(Array.isArray(got.has)&&!got.has.length) await run('zero','0');
+  }
+  const ks=Object.keys(got);
+  const errs=ks.filter(function(k){ return got[k] instanceof Error; });
+  if(errs.length&&errs.length===ks.length)
+    return {error:String(got[errs[0]].message||got[errs[0]])};
+  const items=[],seen={};
+  ['has','zero'].forEach(function(k){
+    const rows=got[k];
+    if(!Array.isArray(rows)) return;
+    rows.forEach(function(r){
+      const x=stockRow(r);
+      if(x.itemNo!==itemNo) return;
+      const sig=x.branchNo+'|'+x.place+'|'+x.qty;
+      if(seen[sig]) return;
+      seen[sig]=1; items.push(x);
+    });
+  });
+  items.sort(function(a,b){
+    const d=Math.abs(b.qty)-Math.abs(a.qty);
+    return d!==0?d:(a.branchNo<b.branchNo?-1:(a.branchNo>b.branchNo?1:0));
+  });
+  let qty=0,amt=0;
+  items.forEach(function(x){ qty+=x.qty; amt+=x.amt; });
+  const has=items.filter(function(x){ return Math.abs(x.qty)>1e-9; });
+  const out={
+    success:true,itemNo:itemNo,
+    itemName:items.length?items[0].itemName:'',unit:items.length?items[0].unit:'',
+    includeZero:!!includeZero,rows:items,durationMs:Date.now()-t0,
+    summary:{totalQty:roundN(qty,3),totalAmt:roundN(amt,2),branchCount:has.length,
+      rowCount:items.length,
+      branches:has.slice(0,8).map(function(x){ return {branchNo:x.branchNo,branchName:x.branchName,qty:x.qty}; })},
+    message:items.length?'':'该商品在各门店/仓库都没有库存记录'
+  };
+  if(items.length) recentPush({itemNo:out.itemNo,itemName:out.itemName,
+    clsName:items[0].clsName,unit:out.unit,spec:items[0].spec,
+    qty:out.summary.totalQty,branchCount:out.summary.branchCount});
+  return out;
+}
+function recentAll(){ return lsJson('sx_recent',[]); }
+function recentPush(x){
+  let a=recentAll().filter(function(i){ return i.itemNo!==x.itemNo; });
+  a.unshift({itemNo:x.itemNo,itemName:x.itemName,clsName:x.clsName||'',unit:x.unit||'',
+    spec:x.spec||'',qty:x.qty||0,branchCount:x.branchCount||0,
+    ts:Date.now()/1000,noBranches:true});
+  if(a.length>200) a=a.slice(0,200);
+  lsSet('sx_recent',a);
+}
+
+/* ---------- 登录 / 强制登录（proxy.py /login 的移植） ---------- */
+function normOper(v){ return String(v||'').trim().toUpperCase().replace(/^W/,''); }
+async function onlineUsers(jar){
+  const body=sxForm({operId:'',branchNo:'',gridFlag:'OperatorStopList',
+    page:'1',rows:'500',loadAll:'true'});
+  const res=await sxRaw('POST','/api/Login/QueryCheckinUsers',body,
+    {'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+     'X-Requested-With':'XMLHttpRequest',
+     'Referer':SX.target+'/WebPages/Adm/OperatorStop.aspx'},jar);
+  if(res.error||res.status>=400) return null;
+  const obj=sxParse(res.text);
+  if(!obj||typeof obj!=='object'||obj.isLoseLogin) return null;
+  return Array.isArray(obj.rows)?obj.rows:[];
+}
+async function kickOnlineOper(jar,operIds,operName){
+  const rows=await onlineUsers(jar);
+  if(rows===null) return {kicked:false,message:'无法读取在线用户列表（当前会话没有管理权限）'};
+  const wanted={};
+  (operIds||[]).forEach(function(x){ const n=normOper(x); if(n) wanted[n]=1; });
+  operName=(operName||'').trim();
+  const hit=function(r){
+    const oid=normOper(r&&r.oper_id);
+    if(Object.keys(wanted).length) return !!wanted[oid];
+    return !!operName&&cleanS(r&&r.oper_name)===operName;
+  };
+  const targets=rows.filter(hit);
+  if(!targets.length) return {kicked:false,message:'在线列表里没有该账号的登录记录'};
+  let kicked=0;
+  for(let i=0;i<targets.length;i++){
+    const r=targets[i];
+    const body=sxForm({operId:cleanS(r.oper_id),branchNo:cleanS(r.branch_no),
+      isPos:(cleanS(r.pos_online)==='是')?'true':'false'});
+    const res=await sxRaw('POST','/api/Login/ForceLogoutSoft',body,
+      {'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+       'X-Requested-With':'XMLHttpRequest',
+       'Referer':SX.target+'/WebPages/Adm/OperatorStop.aspx'},jar);
+    let o={};
+    try{ o=JSON.parse(res.text||'{}'); }catch(e){}
+    if(o.success) kicked++;
+  }
+  const left=await onlineUsers(jar);
+  if(left===null) return {kicked:kicked>0,message:'已踢出 '+kicked+' 个会话（复查未完成）'};
+  const still=left.filter(hit);
+  if(still.length) return {kicked:false,message:'仍有 '+still.length+' 个会话在线（踢出 '+kicked+' 个）'};
+  return {kicked:true,message:'已踢出 '+kicked+' 个会话'};
+}
+const LOGIN_HEADERS={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+  'X-Requested-With':'XMLHttpRequest'};
+async function iosLogin(opt){
+  let p={};
+  try{ p=JSON.parse(opt.body||'{}'); }catch(e){}
+  const user=(p.user||'').trim(),pwd=(p.pwd||'').trim();
+  const code=(p.code||'').trim(),guid=(p.guid||'').trim();
+  const force=!!p.force;
+  if(!(user&&pwd&&code&&guid)) return {success:false,message:'账号、密码、验证码不能为空'};
+  const LH=Object.assign({},LOGIN_HEADERS,{'Referer':SX.target+'/Login.aspx'});
+  const form={i:sxB64(user),a:sxB64(pwd),o:'false',s:'false',v:code,d:guid,
+    env:'current',p:'0',c:'',r:'true',w:'',b:'chrome'};
+  const beforeJar=mainJar();
+  if(force){
+    let kicked=false,kmsg='';
+    const mgmt=jarGet('sx_mgmt');
+    if(mgmt&&mgmt.length){
+      const k=await kickOnlineOper(mgmt,[user]);
+      kicked=k.kicked; kmsg=k.message;
+      if(!kicked) jarSet('sx_mgmt',[]);
+    }
+    if(!kicked){
+      const mr=await sxRaw('POST','/api/Login/Login',sxForm(Object.assign({},form,{o:'true'})),
+        LH,minusCtx(beforeJar));
+      if(mr.error) return {success:false,message:mr.error};
+      let mp={};
+      try{ mp=JSON.parse(mr.text||'{}'); }catch(e){}
+      if(!mp.success){
+        return {success:false,message:mp.message||'登录失败',
+          _needForce:mp.message==='A006',
+          _operName:(mp.data&&mp.data.operName)||''};
+      }
+      const mgmtJar=mergeSet(minusCtx(beforeJar),mr.setCookies||[]);
+      const opName=(mp.data&&mp.data.operName)||'';
+      const k=await kickOnlineOper(mgmtJar,[user],opName);
+      if(k.kicked){ jarSet('sx_mgmt',mgmtJar); }
+      else{
+        jarSet('sx_mgmt',[]);
+        try{ await sxRaw('POST','/api/Adm/LogOut','',{},mgmtJar); }catch(e){}
+      }
+      return {success:false,message:k.kicked?'KICKED':'KICKFAIL',
+        _kicked:!!k.kicked,_kickMessage:k.message,_needCode:true,_operName:opName};
+    }
+    /* 复用管理态踢人成功：验证码还在，直接落到下面的普通登录 */
+  }
+  const res=await sxRaw('POST','/api/Login/Login',sxForm(form),LH,minusCtx(beforeJar));
+  if(res.error) return {success:false,message:res.error};
+  let parsed={};
+  try{ parsed=JSON.parse(res.text||'{}'); }
+  catch(e){ parsed={success:false,message:'登录响应解析失败'}; }
+  if(parsed.success){
+    jarSet('sx_jar',mergeSet(minusCtx(beforeJar),res.setCookies||[]));
+  }
+  const op=sessionIdentityOf(mainJar());
+  const prev=sessionIdentityOf(beforeJar);
+  parsed._hasSession=mainJar().some(function(c){ return c.name==='sq10_user_ctx'; });
+  parsed._operator=op;
+  parsed._switched=!!(parsed.success&&op.operId&&prev.operId!==op.operId);
+  parsed._forced=!!(parsed.success&&force);
+  if(!parsed.success&&parsed.message==='A006'){
+    parsed._needForce=true;
+    parsed._operName=(parsed.data&&parsed.data.operName)||'';
+  }
+  return parsed;
+}
+
+/* ---------- 逻辑接口表 ---------- */
+const H={};
+window.__IOS_HANDLERS__=H;
+
+H['/status']=async function(){
+  const j=mainJar();
+  return {mode:'ios',target:SX.target,
+    hasSession:j.some(function(c){ return c.name==='sq10_user_ctx'; }),
+    cookieNames:j.map(function(c){ return c.name; }),
+    operator:sessionIdentityOf(j),appPrefix:'/__app__',
+    collector:{enabled:false,results:{},interval:0},
+    dbFile:'',captureCount:0};
+};
+H['/overview']=async function(){
+  const st=await H['/status']();
+  const vm=function(rep){
+    const v=lsJson('sx_view_'+rep,null);
+    return {report:rep,name:REP[rep],
+      activeRows:v?(v.total||0):0,totalRows:v?(v.total||0):0,totalChanges:0,
+      columns:v?(v.headers||[]):[],dimCols:v?(v.dimCols||[]):[],metCols:v?(v.metCols||[]):[],
+      colStats:v?(v.summary||{}):{},
+      lastSnapshot:v?{ts:v.ts,ok:1,message:'上次实时查询',row_count:v.total||0,added:0,changed:0}:null};
+  };
+  return Object.assign(st,{reports:[vm('item'),vm('shop')],
+    sources:{item:{path:SX_SRC.item.path},shop:{path:SX_SRC.shop.path}},
+    serverTime:Date.now()/1000});
+};
+H['/query']=async function(path,opt){
+  let p={};
+  try{ p=JSON.parse(opt.body||'{}'); }catch(e){}
+  const rep=(p.report||'item');
+  if(!SX_SRC[rep]) return {error:'未知报表'};
+  const cls=(p.cls||'').trim(),branch=(p.branch||'').trim(),q=(p.q||'').trim();
+  const limit=Math.max(1,Math.min(5000,parseInt(p.limit||100,10)||100));
+  const offset=Math.max(0,parseInt(p.offset||0,10)||0);
+  let extra;
+  try{ extra=reportDateParams(p.begin||'',p.end||'',rep,cls,branch); }
+  catch(e){ return {error:String(e.message||e)}; }
+  const vw={cls:(rep==='item')?cls:'',branch:(rep==='shop')?branch:''};
+  const r=await queryReport(rep,extra,vw,limit,offset,q);
+  const b=extra.beginDate.slice(0,10),e=extra.endDate.slice(0,10);
+  r.begin=b; r.end=e;
+  r.dateLabel=(b===e)?b:(b+' ~ '+e);
+  r.q=q;
+  return r;
+};
+H['/categories']=async function(path){
+  const qs=parseQs(path);
+  return await fetchCats(qs.refresh==='1');
+};
+H['/branches']=async function(path){
+  const qs=parseQs(path);
+  return await fetchBrs(qs.refresh==='1');
+};
+H['/login']=iosLogin;
+H['/logout']=async function(){
+  jarSet('sx_jar',[]); jarSet('sx_mgmt',[]);
+  return {success:true,message:'已退出登录'};
+};
+H['/stock/query']=async function(path){
+  const qs=parseQs(path);
+  const itemNo=(qs.item_no||'').trim();
+  const zero=qs.zero==='1'||qs.zero==='true';
+  if(itemNo) return await stockQuery(itemNo,zero);
+  const kw=(qs.q||'').trim();
+  if(!kw) return {error:'请先输入商品名称、条码或编码'};
+  if(/^[0-9A-Za-z._-]+$/.test(kw)) return await stockQuery(kw,false);
+  const all=recentAll();
+  const items=all.filter(function(i){
+    return (i.itemName||'').indexOf(kw)>=0||(i.clsName||'').indexOf(kw)>=0;
+  });
+  if(!items.length)
+    return {success:true,mode:'search',keyword:kw,items:[],
+      summary:{itemCount:0,withStock:0,totalQty:0,totalAmt:0,rowCount:0,branchCount:0},
+      durationMs:0,
+      message:'App 里还没有名称带「'+kw+'」的查询记录。请直接输条码/编码查询，查过的商品会自动记住。'};
+  return {success:true,mode:'search',keyword:kw,items:items,dataAt:0,durationMs:0,
+    summary:{itemCount:items.length,
+      withStock:items.filter(function(i){ return (i.qty||0)!==0; }).length,
+      totalQty:items.reduce(function(a,i){ return a+(i.qty||0); },0),
+      totalAmt:0,rowCount:items.length,branchCount:0},
+    message:''};
+};
+H['/stock/sync']=async function(){
+  return {success:true,sync:{interval:0,running:false,lastRun:0},
+    activeRows:0,items:0,branches:0};
+};
+H['/stock/changes']=async function(){ return {success:true,rows:[]}; };
+H['/changes']=async function(){ return {rows:[],total:0}; };
+H['/snapshots']=async function(){ return {rows:[]}; };
+H['/collector/run']=async function(){ return {success:true,results:{}}; };
+H['/collector/config']=async function(){ return {success:true,cfg:{interval:60,enabled:false}}; };
+H['/sources']=async function(){
+  return {success:true,cfg:{interval:60,enabled:false},
+    sources:{item:{path:SX_SRC.item.path,label:'实时直连'},
+             shop:{path:SX_SRC.shop.path,label:'实时直连'}}};
+};
+H['/menu']=async function(){ return {success:false,message:'App 直连模式不需要菜单'}; };
+
+/* ---------- iOS 模式的界面裁剪 ---------- */
+window.__iosApplyMode=function(){
+  document.title='销售看板';
+  function hide(id){ const el=document.getElementById(id); if(el) el.classList.add('hidden'); }
+  hide('collectCard'); hide('ovCard'); hide('chgCard'); hide('snapBox'); hide('btnStockSync');
+  LIVE_MODE=true; SHOP_LIVE=true;
+  try{ const a=$('clsLive'); a.checked=true; a.disabled=true; }catch(e){}
+  try{ const b=$('brLive'); b.checked=true; b.disabled=true; }catch(e){}
+  const qh=document.querySelector('#panel-stock .query-hint');
+  if(qh) qh.innerHTML='App 直连模式：输条码 / 编码直接查思迅实时库存，查过的商品会记住，按名称可再次翻出。'+
+    '<span class="hint" id="stockHint">iOS 直连模式</span>';
+  try{
+    window.stockSyncStatus=function(){ const el=$('stockHint'); if(el) el.textContent='iOS 直连模式 · 查询直连思迅实时接口'; };
+    stockSyncStatus();
+  }catch(e){}
+  try{ updateClsCond(); updateBrCond(); }catch(e){}
+  /* 报表 CSV 导出改为客户端生成（App 里没有本地库接口） */
+  const csvBtn=document.querySelector('[data-act=csv]');
+  if(csvBtn) csvBtn.onclick=function(){
+    const d=DATA[CUR];
+    if(!d||!(d.rows||[]).length) return;
+    const hs=d.headers||[];
+    const lines=[hs.join(',')];
+    (d.rows||[]).forEach(function(x){
+      const p=x.payload||x;
+      lines.push(hs.map(function(h){ return '"'+String(p[h]==null?'':p[h]).replace(/"/g,'""')+'"'; }).join(','));
+    });
+    const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=(REP[CUR]||CUR)+'.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
+};
+})();
+</script>
+</body>
+</html>

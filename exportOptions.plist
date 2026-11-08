@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  签名方式由 GitHub Secrets 注入（见 .github/workflows/build-ipa.yml）：
+	  method: development / ad-hoc / app-store-connect
+	  teamID: 你的 Apple Developer Team ID（10 位字母数字）
+	  provisioningProfiles: 把 com.sixun.salesboard 映射到你描述文件的名字
+	-->
+	<key>method</key>
+	<string>${EXPORT_METHOD}</string>
+	<key>teamID</key>
+	<string>${APPLE_TEAM_ID}</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>${SIGNING_CERT_NAME}</string>
+	<key>stripSwiftSymbols</key>
+	<true/>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.sixun.salesboard</key>
+		<string>${PROFILE_NAME}</string>
+	</dict>
+</dict>
+</plist>
