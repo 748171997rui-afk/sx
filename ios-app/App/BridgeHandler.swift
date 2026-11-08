@@ -93,8 +93,12 @@ final class BridgeHandler: NSObject, WKURLSchemeHandler {
             let status = http?.statusCode ?? 502
             let text = String(data: data ?? Data(), encoding: .utf8) ?? ""
             var setCookies: [[String: String]] = []
-            if let http = http, let fields = http.allHeaderFields as? [String: Any] {
-                let cookies = HTTPCookie.cookies(withResponseHeaderFields: fields, for: response!.url ?? target)
+            if let http = http {
+                var fields: [String: String] = [:]
+                for (k, v) in http.allHeaderFields {
+                    if let ks = k as? String, let vs = v as? String { fields[ks] = vs }
+                }
+                let cookies = HTTPCookie.cookies(withResponseHeaderFields: fields, for: http.url ?? target)
                 setCookies = cookies.map { ["name": $0.name, "value": $0.value] }
             }
             self.respondJSON(task, ["status": status, "text": text, "setCookies": setCookies])
