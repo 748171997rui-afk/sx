@@ -1,0 +1,10 @@
+name: Test CI (ubuntu)
+on:
+  workflow_dispatch:
+  push:
+    paths: [ .github/workflows/test-ci.yml ]
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ubuntu runner works"
