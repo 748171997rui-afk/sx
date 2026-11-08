@@ -2221,7 +2221,7 @@ async function kickOnlineOper(jar,operIds,operName){
 }
 const LOGIN_HEADERS={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
   'X-Requested-With':'XMLHttpRequest'};
-async function iosLogin(opt){
+async function iosLogin(path,opt){
   let p={};
   try{ p=JSON.parse(opt.body||'{}'); }catch(e){}
   const user=(p.user||'').trim(),pwd=(p.pwd||'').trim();
